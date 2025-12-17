@@ -1,0 +1,11 @@
+{
+  "name": "teambuilder-tests",
+  "version": "1.0.0",
+  "description": "Tests for Team Builder",
+  "main": "test.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "author": "",
+  "license": "ISC"
+}

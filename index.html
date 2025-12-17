@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Builder</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Team Builder</h1>
+    
+    <section id="add-student">
+        <h2>Add Student</h2>
+        <input type="text" id="student-name" placeholder="Enter student name">
+        <button id="add-student-btn">Add Student</button>
+    </section>
+    
+    <section id="add-tag">
+        <h2>Add Tag to Student</h2>
+        <select id="student-select"></select>
+        <input type="text" id="tag-input" placeholder="Enter tag">
+        <button id="add-tag-btn">Add Tag</button>
+        <div id="existing-tags"></div>
+    </section>
+    
+    <section id="add-relation">
+        <h2>Add Relation</h2>
+        <select id="left-operand"></select>
+        <select id="operator">
+            <option value="with">should be with</option>
+            <option value="without">should not be with</option>
+        </select>
+        <select id="right-operand"></select>
+        <input type="number" id="importance" placeholder="Importance (1-10)" min="1" max="10">
+        <button id="add-relation-btn">Add Relation</button>
+        <div id="relations-list"></div>
+    </section>
+    
+    <section id="generate-teams">
+        <h2>Generate Teams</h2>
+        <input type="number" id="num-teams" placeholder="Number of teams" min="1">
+        <button id="generate-btn">Generate Teams</button>
+        <div id="teams-output"></div>
+    </section>
+    
+    <script src="script.js"></script>
+</body>
+</html>
