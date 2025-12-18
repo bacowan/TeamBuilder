@@ -62,17 +62,21 @@ function App() {
       <div className="max-w-4xl mx-auto">
         <Header onReset={handleReset} />
 
-        <AddStudent
-          studentName={studentName}
-          onStudentNameChange={setStudentName}
-          onAddStudent={addStudent}
-        />
+        <section className="mb-6 p-6 bg-white rounded-xl shadow-lg">
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4">Students</h2>
 
-        <StudentList
-          students={students}
-          onUpdateStudentName={updateStudentName}
-          onDeleteStudent={deleteStudent}
-        />
+          <AddStudent
+            studentName={studentName}
+            onStudentNameChange={setStudentName}
+            onAddStudent={addStudent}
+          />
+
+          <StudentList
+            students={students}
+            onUpdateStudentName={updateStudentName}
+            onDeleteStudent={deleteStudent}
+          />
+        </section>
 
         <AddTag
           students={students}
