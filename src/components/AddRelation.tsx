@@ -77,7 +77,7 @@ function AddRelation({ relationInput, onRelationInputChange, students }: AddRela
     setSuggestions(filtered)
     setShowSuggestions(filtered.length > 0)
     setSelectedIndex(0)
-  }, [relationInput, cursorPosition, students, allTags])
+  }, [relationInput, cursorPosition, JSON.stringify(students), JSON.stringify(allTags)])
 
   const insertMention = (suggestion: Suggestion) => {
     const context = getAtMentionContext(relationInput, cursorPosition)
