@@ -1,14 +1,30 @@
-import { RelationEntry } from '../types'
+import { RelationEntry, Student, Tag } from '../types'
 
 // Convert text entries to string
-export const textEntriesToString = (entries: RelationEntry[]): string => {
-  return entries.map(entry =>
-    entry.type === 'tag' ? `@${entry.value}` : entry.value
-  ).join('')
+export const textEntriesToString = (
+  entries: RelationEntry[],
+  students: Student[],
+  tags: Tag[]
+): string => {
+  return entries.map(entry => {
+    if (entry.type === 'student') {
+      const student = students.find(s => s.id === entry.id)
+      return student ? `@${student.name}` : ''
+    }
+    if (entry.type === 'tag') {
+      const tag = tags.find(t => t.id === entry.id)
+      return tag ? `@${tag.name}` : ''
+    }
+    return entry.value
+  }).join('')
 }
 
 // Parse string into text entries
-export const parseTextEntries = (text: string): RelationEntry[] => {
+export const parseTextEntries = (
+  text: string,
+  students: Student[],
+  tags: Tag[]
+): RelationEntry[] => {
   const entries: RelationEntry[] = []
   const mentionRegex = /@([\w\s]+?)(?=\s|$|[()[\]{}|&!]|@)/g
   let lastIndex = 0
@@ -23,8 +39,19 @@ export const parseTextEntries = (text: string): RelationEntry[] => {
       }
     }
 
-    // Add mention
-    entries.push({ type: 'tag', value: match[1] })
+    // Try to match student or tag by name
+    const mentionName = match[1]
+    const student = students.find(s => s.name === mentionName)
+    const tag = tags.find(t => t.name === mentionName)
+
+    if (student) {
+      entries.push({ type: 'student', id: student.id })
+    } else if (tag) {
+      entries.push({ type: 'tag', id: tag.id })
+    } else {
+      // Unknown mention, treat as text
+      entries.push({ type: 'text', value: `@${mentionName}` })
+    }
 
     lastIndex = match.index + match[0].length
   }

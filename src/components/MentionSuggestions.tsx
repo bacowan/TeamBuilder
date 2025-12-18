@@ -11,7 +11,7 @@ function MentionSuggestions({ suggestions, selectedIndex, onSelect }: MentionSug
     <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
       {suggestions.map((suggestion, index) => (
         <div
-          key={`${suggestion.type}-${suggestion.value}`}
+          key={`${suggestion.type}-${suggestion.id}`}
           onClick={() => onSelect(suggestion)}
           className={`px-4 py-2 cursor-pointer ${
             index === selectedIndex
@@ -27,7 +27,7 @@ function MentionSuggestions({ suggestions, selectedIndex, onSelect }: MentionSug
             }`}>
               {suggestion.type}
             </span>
-            <span className="font-medium">{suggestion.value}</span>
+            <span className="font-medium">{suggestion.name}</span>
           </div>
           {suggestion.studentName && (
             <div className="text-xs text-gray-500 ml-16">

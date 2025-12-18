@@ -1,4 +1,4 @@
-import { RelationEntry, Student, Suggestion } from '../types'
+import { RelationEntry, Student, Tag, Suggestion } from '../types'
 import { useState, useRef, useEffect } from 'react'
 import MentionSuggestions from './MentionSuggestions'
 import { textEntriesToString, parseTextEntries, findMentionContext } from '../utils/textParser'
@@ -7,23 +7,21 @@ interface AddRelationProps {
   relationInput: RelationEntry[]
   onRelationInputChange: (relation: RelationEntry[]) => void
   students: Student[]
+  tags: Tag[]
 }
 
-function AddRelation({ relationInput, onRelationInputChange, students }: AddRelationProps) {
-  const [displayValue, setDisplayValue] = useState(textEntriesToString(relationInput))
+function AddRelation({ relationInput, onRelationInputChange, students, tags }: AddRelationProps) {
+  const [displayValue, setDisplayValue] = useState(textEntriesToString(relationInput, students, tags))
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [cursorPosition, setCursorPosition] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Get all unique tags from all students
-  const allTags = Array.from(new Set(students.flatMap(s => s.tags)))
-
   // Sync displayValue with relationInput changes from parent
   useEffect(() => {
-    setDisplayValue(textEntriesToString(relationInput))
-  }, [JSON.stringify(relationInput)])
+    setDisplayValue(textEntriesToString(relationInput, students, tags))
+  }, [JSON.stringify(relationInput), JSON.stringify(students), JSON.stringify(tags)])
 
   // Update suggestions when input changes
   useEffect(() => {
@@ -42,23 +40,25 @@ function AddRelation({ relationInput, onRelationInputChange, students }: AddRela
       if (student.name.toLowerCase().includes(searchTerm)) {
         filtered.push({
           type: 'student',
-          value: student.name
+          id: student.id,
+          name: student.name
         })
       }
     })
 
     // Add matching tags
-    allTags.forEach(tag => {
-      if (tag.toLowerCase().includes(searchTerm)) {
+    tags.forEach(tag => {
+      if (tag.name.toLowerCase().includes(searchTerm)) {
         // Find which student(s) have this tag
         const studentNames = students
-          .filter(s => s.tags.includes(tag))
+          .filter(s => s.tags.includes(tag.id))
           .map(s => s.name)
           .join(', ')
 
         filtered.push({
           type: 'tag',
-          value: tag,
+          id: tag.id,
+          name: tag.name,
           studentName: studentNames
         })
       }
@@ -67,7 +67,7 @@ function AddRelation({ relationInput, onRelationInputChange, students }: AddRela
     setSuggestions(filtered)
     setShowSuggestions(filtered.length > 0)
     setSelectedIndex(0)
-  }, [displayValue, cursorPosition, JSON.stringify(students), JSON.stringify(allTags)])
+  }, [displayValue, cursorPosition, JSON.stringify(students), JSON.stringify(tags)])
 
   const insertMention = (suggestion: Suggestion) => {
     const context = findMentionContext(displayValue, cursorPosition)
@@ -76,11 +76,11 @@ function AddRelation({ relationInput, onRelationInputChange, students }: AddRela
     const { atIndex } = context
     const before = displayValue.slice(0, atIndex)
     const after = displayValue.slice(cursorPosition)
-    const mention = `@${suggestion.value}`
+    const mention = `@${suggestion.name}`
     const newText = before + mention + ' ' + after
 
     setDisplayValue(newText)
-    onRelationInputChange(parseTextEntries(newText))
+    onRelationInputChange(parseTextEntries(newText, students, tags))
     setShowSuggestions(false)
 
     // Set cursor after the inserted mention
@@ -113,7 +113,7 @@ function AddRelation({ relationInput, onRelationInputChange, students }: AddRela
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value
     setDisplayValue(newValue)
-    onRelationInputChange(parseTextEntries(newValue))
+    onRelationInputChange(parseTextEntries(newValue, students, tags))
     setCursorPosition(e.target.selectionStart || 0)
   }
 
@@ -131,10 +131,19 @@ function AddRelation({ relationInput, onRelationInputChange, students }: AddRela
         <div className="flex-1 relative">
           <div className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[42px] pointer-events-none">
             {relationInput.map((entry, index) => {
-              if (entry.type === 'tag') {
+              if (entry.type === 'student') {
+                const student = students.find(s => s.id === entry.id)
                 return (
                   <span key={index} className="text-blue-600">
-                    @{entry.value}
+                    @{student?.name || ''}
+                  </span>
+                )
+              }
+              if (entry.type === 'tag') {
+                const tag = tags.find(t => t.id === entry.id)
+                return (
+                  <span key={index} className="text-blue-600">
+                    @{tag?.name || ''}
                   </span>
                 )
               }

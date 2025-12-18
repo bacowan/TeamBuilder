@@ -1,21 +1,22 @@
-import { Student } from '../types'
+import { Student, Tag } from '../types'
 import { useState } from 'react'
 
 interface StudentListProps {
   students: Student[]
+  tags: Tag[]
   onUpdateStudentName: (id: number, newName: string) => void
   onDeleteStudent: (id: number) => void
-  onAddTag: (id: number, tag: string) => void
-  onRemoveTag: (id: number, tag: string) => void
+  onAddTag: (id: number, tagName: string) => void
+  onRemoveTag: (id: number, tagId: number) => void
 }
 
-function StudentList({ students, onUpdateStudentName, onDeleteStudent, onAddTag, onRemoveTag }: StudentListProps) {
+function StudentList({ students, tags, onUpdateStudentName, onDeleteStudent, onAddTag, onRemoveTag }: StudentListProps) {
   const [tagInputs, setTagInputs] = useState<Record<number, string>>({})
 
   const handleAddTag = (studentId: number) => {
-    const tag = tagInputs[studentId]?.trim()
-    if (tag) {
-      onAddTag(studentId, tag)
+    const tagName = tagInputs[studentId]?.trim()
+    if (tagName) {
+      onAddTag(studentId, tagName)
       setTagInputs({ ...tagInputs, [studentId]: '' })
     }
   }
@@ -24,6 +25,11 @@ function StudentList({ students, onUpdateStudentName, onDeleteStudent, onAddTag,
     if (e.key === 'Enter') {
       handleAddTag(studentId)
     }
+  }
+
+  // Helper to get tag name by ID
+  const getTagName = (tagId: number): string => {
+    return tags.find(t => t.id === tagId)?.name || ''
   }
 
   return (
@@ -48,14 +54,14 @@ function StudentList({ students, onUpdateStudentName, onDeleteStudent, onAddTag,
           {/* Tags display */}
           {student.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-2">
-              {student.tags.map((tag, index) => (
+              {student.tags.map((tagId) => (
                 <span
-                  key={index}
+                  key={tagId}
                   className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
                 >
-                  {tag}
+                  {getTagName(tagId)}
                   <button
-                    onClick={() => onRemoveTag(student.id, tag)}
+                    onClick={() => onRemoveTag(student.id, tagId)}
                     className="hover:text-red-600 font-bold"
                   >
                     ×

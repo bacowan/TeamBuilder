@@ -4,20 +4,27 @@ import AddStudent from './components/AddStudent.tsx'
 import StudentList from './components/StudentList.tsx'
 import AddRelation from './components/AddRelation.tsx'
 import GenerateTeams from './components/GenerateTeams.tsx'
-import { Student, RelationEntry } from './types'
+import { Student, Tag, RelationEntry } from './types'
 
 function App() {
   const [students, setStudents] = useState<Student[]>(() =>
     JSON.parse(localStorage.getItem('students') || '[]') as Student[]
   )
+  const [tags, setTags] = useState<Tag[]>(() =>
+    JSON.parse(localStorage.getItem('tags') || '[]') as Tag[]
+  )
   const [studentName, setStudentName] = useState('')
   const [relationInput, setRelationInput] = useState<RelationEntry[]>([])
   const [numTeams, setNumTeams] = useState('')
 
-  // Save to localStorage whenever students change
+  // Save to localStorage whenever students or tags change
   useEffect(() => {
     localStorage.setItem('students', JSON.stringify(students))
   }, [students])
+
+  useEffect(() => {
+    localStorage.setItem('tags', JSON.stringify(tags))
+  }, [tags])
 
   const addStudent = () => {
     const name = studentName.trim()
@@ -40,19 +47,31 @@ function App() {
     ))
   }
 
-  const addTag = (id: number, tag: string) => {
+  const addTag = (studentId: number, tagName: string) => {
+    const trimmedName = tagName.trim()
+    if (!trimmedName) return
+
+    // Find or create tag
+    let tag = tags.find(t => t.name === trimmedName)
+    if (!tag) {
+      const newTagId = tags.length ? Math.max(...tags.map(t => t.id)) + 1 : 0
+      tag = { id: newTagId, name: trimmedName }
+      setTags(prev => [...prev, tag!])
+    }
+
+    // Add tag ID to student
     setStudents(prev => prev.map(s => {
-      if (s.id === id && !s.tags.includes(tag)) {
-        return { ...s, tags: [...s.tags, tag] }
+      if (s.id === studentId && !s.tags.includes(tag!.id)) {
+        return { ...s, tags: [...s.tags, tag!.id] }
       }
       return s
     }))
   }
 
-  const removeTag = (id: number, tag: string) => {
+  const removeTag = (studentId: number, tagId: number) => {
     setStudents(prev => prev.map(s => {
-      if (s.id === id) {
-        return { ...s, tags: s.tags.filter(t => t !== tag) }
+      if (s.id === studentId) {
+        return { ...s, tags: s.tags.filter(t => t !== tagId) }
       }
       return s
     }))
@@ -62,6 +81,7 @@ function App() {
     if (window.confirm('Are you sure you want to reset all data?')) {
       localStorage.clear()
       setStudents([])
+      setTags([])
       setStudentName('')
       setRelationInput([])
       setNumTeams('')
@@ -84,6 +104,7 @@ function App() {
 
           <StudentList
             students={students}
+            tags={tags}
             onUpdateStudentName={updateStudentName}
             onDeleteStudent={deleteStudent}
             onAddTag={addTag}
@@ -95,6 +116,7 @@ function App() {
           relationInput={relationInput}
           onRelationInputChange={setRelationInput}
           students={students}
+          tags={tags}
         />
 
         <GenerateTeams
