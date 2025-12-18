@@ -1,14 +1,55 @@
-import { Student, Suggestion } from '../types'
+import { RelationEntry, Student, Suggestion } from '../types'
 import { useState, useRef, useEffect } from 'react'
 import MentionSuggestions from './MentionSuggestions'
 
 interface AddRelationProps {
-  relationInput: string
-  onRelationInputChange: (relation: string) => void
+  relationInput: RelationEntry[]
+  onRelationInputChange: (relation: RelationEntry[]) => void
   students: Student[]
 }
 
 function AddRelation({ relationInput, onRelationInputChange, students }: AddRelationProps) {
+  // Convert entries to string for input display
+  const entriesToString = (entries: RelationEntry[]): string => {
+    return entries.map(entry =>
+      entry.type === 'tag' ? `@${entry.value}` : entry.value
+    ).join('')
+  }
+
+  // Convert string back to entries
+  const stringToEntries = (text: string): RelationEntry[] => {
+    const entries: RelationEntry[] = []
+    const mentionRegex = /@([\w\s]+?)(?=\s|$|[()[\]{}|&!]|@)/g
+    let lastIndex = 0
+
+    let match
+    while ((match = mentionRegex.exec(text)) !== null) {
+      // Add text before mention
+      if (match.index > lastIndex) {
+        const textBefore = text.slice(lastIndex, match.index)
+        if (textBefore) {
+          entries.push({ type: 'text', value: textBefore })
+        }
+      }
+
+      // Add mention
+      entries.push({ type: 'tag', value: match[1] })
+
+      lastIndex = match.index + match[0].length
+    }
+
+    // Add remaining text
+    if (lastIndex < text.length) {
+      const remaining = text.slice(lastIndex)
+      if (remaining) {
+        entries.push({ type: 'text', value: remaining })
+      }
+    }
+
+    return entries.length > 0 ? entries : [{ type: 'text', value: text }]
+  }
+
+  const [displayValue, setDisplayValue] = useState(entriesToString(relationInput))
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -35,9 +76,14 @@ function AddRelation({ relationInput, onRelationInputChange, students }: AddRela
     }
   }
 
+  // Sync displayValue with relationInput changes from parent
+  useEffect(() => {
+    setDisplayValue(entriesToString(relationInput))
+  }, [JSON.stringify(relationInput)])
+
   // Update suggestions when input changes
   useEffect(() => {
-    const context = getAtMentionContext(relationInput, cursorPosition)
+    const context = getAtMentionContext(displayValue, cursorPosition)
 
     if (!context) {
       setShowSuggestions(false)
@@ -77,19 +123,20 @@ function AddRelation({ relationInput, onRelationInputChange, students }: AddRela
     setSuggestions(filtered)
     setShowSuggestions(filtered.length > 0)
     setSelectedIndex(0)
-  }, [relationInput, cursorPosition, JSON.stringify(students), JSON.stringify(allTags)])
+  }, [displayValue, cursorPosition, JSON.stringify(students), JSON.stringify(allTags)])
 
   const insertMention = (suggestion: Suggestion) => {
-    const context = getAtMentionContext(relationInput, cursorPosition)
+    const context = getAtMentionContext(displayValue, cursorPosition)
     if (!context) return
 
     const { atIndex } = context
-    const before = relationInput.slice(0, atIndex)
-    const after = relationInput.slice(cursorPosition)
+    const before = displayValue.slice(0, atIndex)
+    const after = displayValue.slice(cursorPosition)
     const mention = `@${suggestion.value}`
     const newText = before + mention + ' ' + after
 
-    onRelationInputChange(newText)
+    setDisplayValue(newText)
+    onRelationInputChange(stringToEntries(newText))
     setShowSuggestions(false)
 
     // Set cursor after the inserted mention
@@ -120,7 +167,9 @@ function AddRelation({ relationInput, onRelationInputChange, students }: AddRela
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onRelationInputChange(e.target.value)
+    const newValue = e.target.value
+    setDisplayValue(newValue)
+    onRelationInputChange(stringToEntries(newValue))
     setCursorPosition(e.target.selectionStart || 0)
   }
 
@@ -139,7 +188,7 @@ function AddRelation({ relationInput, onRelationInputChange, students }: AddRela
           <input
             ref={inputRef}
             type="text"
-            value={relationInput}
+            value={displayValue}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             onClick={handleClick}

@@ -9,3 +9,7 @@ export interface Suggestion {
   value: string
   studentName?: string
 }
+
+export type RelationEntry = 
+  { type: 'text'; value: string }
+  | { type: 'tag'; value: string}

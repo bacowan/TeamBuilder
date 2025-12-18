@@ -4,14 +4,14 @@ import AddStudent from './components/AddStudent.tsx'
 import StudentList from './components/StudentList.tsx'
 import AddRelation from './components/AddRelation.tsx'
 import GenerateTeams from './components/GenerateTeams.tsx'
-import { Student } from './types'
+import { Student, RelationEntry } from './types'
 
 function App() {
   const [students, setStudents] = useState<Student[]>(() =>
     JSON.parse(localStorage.getItem('students') || '[]') as Student[]
   )
   const [studentName, setStudentName] = useState('')
-  const [relationInput, setRelationInput] = useState('')
+  const [relationInput, setRelationInput] = useState<RelationEntry[]>([])
   const [numTeams, setNumTeams] = useState('')
 
   // Save to localStorage whenever students change
@@ -63,7 +63,7 @@ function App() {
       localStorage.clear()
       setStudents([])
       setStudentName('')
-      setRelationInput('')
+      setRelationInput([])
       setNumTeams('')
     }
   }
