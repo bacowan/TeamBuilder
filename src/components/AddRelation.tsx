@@ -1,6 +1,6 @@
-import { Student } from '../types'
+import { Student, Suggestion } from '../types'
 import { useState, useRef, useEffect } from 'react'
-import MentionSuggestions, { Suggestion } from './MentionSuggestions'
+import MentionSuggestions from './MentionSuggestions'
 
 interface AddRelationProps {
   relationInput: string

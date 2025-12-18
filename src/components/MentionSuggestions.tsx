@@ -1,8 +1,4 @@
-interface Suggestion {
-  type: 'student' | 'tag'
-  value: string
-  studentName?: string
-}
+import { Suggestion } from '../types'
 
 interface MentionSuggestionsProps {
   suggestions: Suggestion[]
@@ -45,4 +41,3 @@ function MentionSuggestions({ suggestions, selectedIndex, onSelect }: MentionSug
 }
 
 export default MentionSuggestions
-export type { Suggestion }
