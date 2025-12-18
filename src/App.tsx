@@ -26,24 +26,26 @@ function App() {
   const addStudent = () => {
     const name = studentName.trim()
     if (name) {
-      const id = students.length ? Math.max(...students.map(s => s.id)) + 1 : 0
-      setStudents([...students, { id, name, tags: [] }])
+      setStudents(prev => {
+        const id = prev.length ? Math.max(...prev.map(s => s.id)) + 1 : 0
+        return [...prev, { id, name, tags: [] }]
+      })
       setStudentName('')
     }
   }
 
   const deleteStudent = (id: number) => {
-    setStudents(students.filter(s => s.id !== id))
+    setStudents(prev => prev.filter(s => s.id !== id))
   }
 
   const updateStudentName = (id: number, newName: string) => {
-    setStudents(students.map(s =>
+    setStudents(prev => prev.map(s =>
       s.id === id ? { ...s, name: newName.trim() } : s
     ))
   }
 
   const addTag = (id: number, tag: string) => {
-    setStudents(students.map(s => {
+    setStudents(prev => prev.map(s => {
       if (s.id === id && !s.tags.includes(tag)) {
         return { ...s, tags: [...s.tags, tag] }
       }
@@ -52,7 +54,7 @@ function App() {
   }
 
   const removeTag = (id: number, tag: string) => {
-    setStudents(students.map(s => {
+    setStudents(prev => prev.map(s => {
       if (s.id === id) {
         return { ...s, tags: s.tags.filter(t => t !== tag) }
       }
