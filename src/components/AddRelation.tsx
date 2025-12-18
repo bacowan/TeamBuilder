@@ -129,6 +129,19 @@ function AddRelation({ relationInput, onRelationInputChange, students }: AddRela
       </p>
       <div className="relative flex gap-2">
         <div className="flex-1 relative">
+          <div className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            {relationInput.map((entry, index) => {
+              if (entry.type === 'tag') {
+                return (
+                  <span key={index} className="text-blue-600">
+                    @{entry.value}
+                  </span>
+                )
+              }
+              return <span key={index}>{entry.value}</span>
+            })}
+          </div>
+
           <input
             ref={inputRef}
             type="text"
@@ -138,7 +151,7 @@ function AddRelation({ relationInput, onRelationInputChange, students }: AddRela
             onClick={handleClick}
             onKeyUp={handleClick}
             placeholder="e.g., NOT (@Kakeru AND @Kazuki)"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="absolute inset-0 w-full px-4 py-2 border border-transparent rounded-lg focus:outline-none opacity-0 cursor-text"
           />
 
           {showSuggestions && (
