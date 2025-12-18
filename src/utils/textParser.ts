@@ -26,7 +26,8 @@ export const parseTextEntries = (
   tags: Tag[]
 ): RelationEntry[] => {
   const entries: RelationEntry[] = []
-  const mentionRegex = /@([\w\s]+?)(?=\s|$|[()[\]{}|&!]|@)/g
+  // Match @ followed by non-space characters until we hit space, special char, or end
+  const mentionRegex = /@(\S+?)(?=\s|$|[()[\]{}|&!]|@)/g
   let lastIndex = 0
 
   let match
