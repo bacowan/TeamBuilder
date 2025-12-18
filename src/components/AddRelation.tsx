@@ -1,4 +1,9 @@
-function AddRelation({ relationInput, onRelationInputChange }) {
+interface AddRelationProps {
+  relationInput: string
+  onRelationInputChange: (relation: string) => void
+}
+
+function AddRelation({ relationInput, onRelationInputChange }: AddRelationProps) {
   return (
     <section className="mb-6 p-6 bg-white rounded-xl shadow-lg">
       <h2 className="text-2xl font-semibold text-gray-800 mb-4">Add Relation</h2>

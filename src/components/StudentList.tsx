@@ -1,4 +1,12 @@
-function StudentList({ students, onUpdateStudentName, onDeleteStudent }) {
+import { Student } from '../types'
+
+interface StudentListProps {
+  students: Student[]
+  onUpdateStudentName: (id: number, newName: string) => void
+  onDeleteStudent: (id: number) => void
+}
+
+function StudentList({ students, onUpdateStudentName, onDeleteStudent }: StudentListProps) {
   return (
     <ul className="space-y-2">
       {students.map(student => (

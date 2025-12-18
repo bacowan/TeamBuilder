@@ -1,4 +1,8 @@
-function Header({ onReset }) {
+interface HeaderProps {
+  onReset: () => void
+}
+
+function Header({ onReset }: HeaderProps) {
   return (
     <div className="mb-8 flex items-center justify-between">
       <h1 className="text-4xl font-bold text-gray-800">Team Builder</h1>

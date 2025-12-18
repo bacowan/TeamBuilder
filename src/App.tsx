@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
-import Header from './components/Header'
-import AddStudent from './components/AddStudent'
-import StudentList from './components/StudentList'
-import AddTag from './components/AddTag'
-import AddRelation from './components/AddRelation'
-import GenerateTeams from './components/GenerateTeams'
+import Header from './components/Header.tsx'
+import AddStudent from './components/AddStudent.tsx'
+import StudentList from './components/StudentList.tsx'
+import AddTag from './components/AddTag.tsx'
+import AddRelation from './components/AddRelation.tsx'
+import GenerateTeams from './components/GenerateTeams.tsx'
+import { Student } from './types'
 
 function App() {
-  const [students, setStudents] = useState([])
+  const [students, setStudents] = useState<Student[]>([])
   const [studentName, setStudentName] = useState('')
   const [selectedStudentId, setSelectedStudentId] = useState('')
   const [tagInput, setTagInput] = useState('')
@@ -16,7 +17,7 @@ function App() {
 
   // Load from localStorage on mount
   useEffect(() => {
-    const savedStudents = JSON.parse(localStorage.getItem('students')) || []
+    const savedStudents = JSON.parse(localStorage.getItem('students') || '[]') as Student[]
     setStudents(savedStudents)
   }, [])
 
@@ -34,11 +35,11 @@ function App() {
     }
   }
 
-  const deleteStudent = (id) => {
+  const deleteStudent = (id: number) => {
     setStudents(students.filter(s => s.id !== id))
   }
 
-  const updateStudentName = (id, newName) => {
+  const updateStudentName = (id: number, newName: string) => {
     setStudents(students.map(s =>
       s.id === id ? { ...s, name: newName.trim() } : s
     ))
@@ -56,7 +57,7 @@ function App() {
     }
   }
 
-  const handleKeyDown = (e, callback) => {
+  const handleKeyDown = (e: React.KeyboardEvent, callback: () => void) => {
     if (e.key === 'Enter') {
       callback()
     }

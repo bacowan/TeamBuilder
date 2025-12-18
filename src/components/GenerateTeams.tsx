@@ -1,4 +1,9 @@
-function GenerateTeams({ numTeams, onNumTeamsChange }) {
+interface GenerateTeamsProps {
+  numTeams: string
+  onNumTeamsChange: (numTeams: string) => void
+}
+
+function GenerateTeams({ numTeams, onNumTeamsChange }: GenerateTeamsProps) {
   return (
     <section className="mb-6 p-6 bg-white rounded-xl shadow-lg">
       <h2 className="text-2xl font-semibold text-gray-800 mb-4">Generate Teams</h2>

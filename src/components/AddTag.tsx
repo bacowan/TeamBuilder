@@ -1,4 +1,14 @@
-function AddTag({ students, selectedStudentId, onSelectedStudentChange, tagInput, onTagInputChange }) {
+import { Student } from '../types'
+
+interface AddTagProps {
+  students: Student[]
+  selectedStudentId: string
+  onSelectedStudentChange: (id: string) => void
+  tagInput: string
+  onTagInputChange: (tag: string) => void
+}
+
+function AddTag({ students, selectedStudentId, onSelectedStudentChange, tagInput, onTagInputChange }: AddTagProps) {
   return (
     <section className="mb-6 p-6 bg-white rounded-xl shadow-lg">
       <h2 className="text-2xl font-semibold text-gray-800 mb-4">Add Tag to Student</h2>
