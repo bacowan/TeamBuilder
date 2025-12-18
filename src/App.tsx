@@ -7,16 +7,12 @@ import GenerateTeams from './components/GenerateTeams.tsx'
 import { Student } from './types'
 
 function App() {
-  const [students, setStudents] = useState<Student[]>([])
+  const [students, setStudents] = useState<Student[]>(() =>
+    JSON.parse(localStorage.getItem('students') || '[]') as Student[]
+  )
   const [studentName, setStudentName] = useState('')
   const [relationInput, setRelationInput] = useState('')
   const [numTeams, setNumTeams] = useState('')
-
-  // Load from localStorage on mount
-  useEffect(() => {
-    const savedStudents = JSON.parse(localStorage.getItem('students') || '[]') as Student[]
-    setStudents(savedStudents)
-  }, [])
 
   // Save to localStorage whenever students change
   useEffect(() => {
