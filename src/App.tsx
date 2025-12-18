@@ -94,6 +94,7 @@ function App() {
         <AddRelation
           relationInput={relationInput}
           onRelationInputChange={setRelationInput}
+          students={students}
         />
 
         <GenerateTeams

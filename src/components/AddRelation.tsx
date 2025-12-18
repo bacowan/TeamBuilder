@@ -1,20 +1,161 @@
+import { Student } from '../types'
+import { useState, useRef, useEffect } from 'react'
+import MentionSuggestions, { Suggestion } from './MentionSuggestions'
+
 interface AddRelationProps {
   relationInput: string
   onRelationInputChange: (relation: string) => void
+  students: Student[]
 }
 
-function AddRelation({ relationInput, onRelationInputChange }: AddRelationProps) {
+function AddRelation({ relationInput, onRelationInputChange, students }: AddRelationProps) {
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [selectedIndex, setSelectedIndex] = useState(0)
+  const [cursorPosition, setCursorPosition] = useState(0)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // Get all unique tags from all students
+  const allTags = Array.from(new Set(students.flatMap(s => s.tags)))
+
+  // Find @ symbol position and search term
+  const getAtMentionContext = (text: string, position: number) => {
+    const beforeCursor = text.slice(0, position)
+    const lastAtIndex = beforeCursor.lastIndexOf('@')
+
+    if (lastAtIndex === -1) return null
+
+    const afterAt = beforeCursor.slice(lastAtIndex + 1)
+    // Check if there's a space after @ (which would end the mention)
+    if (afterAt.includes(' ')) return null
+
+    return {
+      atIndex: lastAtIndex,
+      searchTerm: afterAt.toLowerCase()
+    }
+  }
+
+  // Update suggestions when input changes
+  useEffect(() => {
+    const context = getAtMentionContext(relationInput, cursorPosition)
+
+    if (!context) {
+      setShowSuggestions(false)
+      return
+    }
+
+    const { searchTerm } = context
+    const filtered: Suggestion[] = []
+
+    // Add matching students
+    students.forEach(student => {
+      if (student.name.toLowerCase().includes(searchTerm)) {
+        filtered.push({
+          type: 'student',
+          value: student.name
+        })
+      }
+    })
+
+    // Add matching tags
+    allTags.forEach(tag => {
+      if (tag.toLowerCase().includes(searchTerm)) {
+        // Find which student(s) have this tag
+        const studentNames = students
+          .filter(s => s.tags.includes(tag))
+          .map(s => s.name)
+          .join(', ')
+
+        filtered.push({
+          type: 'tag',
+          value: tag,
+          studentName: studentNames
+        })
+      }
+    })
+
+    setSuggestions(filtered)
+    setShowSuggestions(filtered.length > 0)
+    setSelectedIndex(0)
+  }, [relationInput, cursorPosition, students, allTags])
+
+  const insertMention = (suggestion: Suggestion) => {
+    const context = getAtMentionContext(relationInput, cursorPosition)
+    if (!context) return
+
+    const { atIndex } = context
+    const before = relationInput.slice(0, atIndex)
+    const after = relationInput.slice(cursorPosition)
+    const mention = `@${suggestion.value}`
+    const newText = before + mention + ' ' + after
+
+    onRelationInputChange(newText)
+    setShowSuggestions(false)
+
+    // Set cursor after the inserted mention
+    setTimeout(() => {
+      const newPosition = atIndex + mention.length + 1
+      inputRef.current?.setSelectionRange(newPosition, newPosition)
+      setCursorPosition(newPosition)
+    }, 0)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!showSuggestions) return
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setSelectedIndex(prev => (prev + 1) % suggestions.length)
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setSelectedIndex(prev => (prev - 1 + suggestions.length) % suggestions.length)
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+      if (suggestions.length > 0) {
+        e.preventDefault()
+        insertMention(suggestions[selectedIndex])
+      }
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false)
+    }
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onRelationInputChange(e.target.value)
+    setCursorPosition(e.target.selectionStart || 0)
+  }
+
+  const handleClick = () => {
+    setCursorPosition(inputRef.current?.selectionStart || 0)
+  }
+
   return (
     <section className="mb-6 p-6 bg-white rounded-xl shadow-lg">
       <h2 className="text-2xl font-semibold text-gray-800 mb-4">Add Relation</h2>
-      <div className="flex gap-2">
-        <input
-          type="text"
-          value={relationInput}
-          onChange={(e) => onRelationInputChange(e.target.value)}
-          placeholder="Enter relation"
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+      <p className="text-sm text-gray-600 mb-3">
+        Type @ to mention students or tags. Use AND, OR, NOT to create relations.
+      </p>
+      <div className="relative flex gap-2">
+        <div className="flex-1 relative">
+          <input
+            ref={inputRef}
+            type="text"
+            value={relationInput}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            onClick={handleClick}
+            onKeyUp={handleClick}
+            placeholder="e.g., NOT (@Kakeru AND @Kazuki)"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+
+          {showSuggestions && (
+            <MentionSuggestions
+              suggestions={suggestions}
+              selectedIndex={selectedIndex}
+              onSelect={insertMention}
+            />
+          )}
+        </div>
         <button className="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors shadow-md">
           Add Relation
         </button>
