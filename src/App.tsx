@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import Header from './components/Header.tsx'
 import AddStudent from './components/AddStudent.tsx'
 import StudentList from './components/StudentList.tsx'
-import AddTag from './components/AddTag.tsx'
 import AddRelation from './components/AddRelation.tsx'
 import GenerateTeams from './components/GenerateTeams.tsx'
 import { Student } from './types'
@@ -10,8 +9,6 @@ import { Student } from './types'
 function App() {
   const [students, setStudents] = useState<Student[]>([])
   const [studentName, setStudentName] = useState('')
-  const [selectedStudentId, setSelectedStudentId] = useState('')
-  const [tagInput, setTagInput] = useState('')
   const [relationInput, setRelationInput] = useState('')
   const [numTeams, setNumTeams] = useState('')
 
@@ -30,7 +27,7 @@ function App() {
     const name = studentName.trim()
     if (name) {
       const id = students.length ? Math.max(...students.map(s => s.id)) + 1 : 0
-      setStudents([...students, { id, name }])
+      setStudents([...students, { id, name, tags: [] }])
       setStudentName('')
     }
   }
@@ -45,13 +42,29 @@ function App() {
     ))
   }
 
+  const addTag = (id: number, tag: string) => {
+    setStudents(students.map(s => {
+      if (s.id === id && !s.tags.includes(tag)) {
+        return { ...s, tags: [...s.tags, tag] }
+      }
+      return s
+    }))
+  }
+
+  const removeTag = (id: number, tag: string) => {
+    setStudents(students.map(s => {
+      if (s.id === id) {
+        return { ...s, tags: s.tags.filter(t => t !== tag) }
+      }
+      return s
+    }))
+  }
+
   const handleReset = () => {
     if (window.confirm('Are you sure you want to reset all data?')) {
       localStorage.clear()
       setStudents([])
       setStudentName('')
-      setSelectedStudentId('')
-      setTagInput('')
       setRelationInput('')
       setNumTeams('')
     }
@@ -75,16 +88,10 @@ function App() {
             students={students}
             onUpdateStudentName={updateStudentName}
             onDeleteStudent={deleteStudent}
+            onAddTag={addTag}
+            onRemoveTag={removeTag}
           />
         </section>
-
-        <AddTag
-          students={students}
-          selectedStudentId={selectedStudentId}
-          onSelectedStudentChange={setSelectedStudentId}
-          tagInput={tagInput}
-          onTagInputChange={setTagInput}
-        />
 
         <AddRelation
           relationInput={relationInput}
