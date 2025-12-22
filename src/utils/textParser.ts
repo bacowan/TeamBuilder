@@ -1,4 +1,4 @@
-import { RelationEntry, Student, Tag } from '../types'
+import { RelationEntry, Student, Tag, Relation, ParsedRelation } from '../types'
 
 // Convert text entries to string
 export const textEntriesToString = (
@@ -83,4 +83,19 @@ export const findMentionContext = (text: string, position: number) => {
     atIndex: lastAtIndex,
     searchTerm: afterAt.toLowerCase()
   }
+}
+
+// Parse relation into validated relation with tokens (AND, OR, NOT, parens)
+// Returns null if the relation is invalid
+export const parseRelation = (relation: Relation, students: Student[], tags: Tag[]): ParsedRelation | null => {
+  // TODO: Implement parsing logic
+  return null
+}
+
+// Validate relation entries using parseRelation
+export const validateRelationEntries = (entries: RelationEntry[]): boolean => {
+  if (entries.length === 0) return false
+
+  // For now, check if all entries are either student or tag (no text entries allowed)
+  return entries.every(entry => entry.type === 'student' || entry.type === 'tag')
 }

@@ -17,12 +17,27 @@ export interface Suggestion {
 }
 
 export type RelationEntry =
-  { type: 'text'; value: string }
+  | { type: 'text'; value: string }
   | { type: 'student'; id: number }
   | { type: 'tag'; id: number }
+
+export type ParsedRelationEntry =
+  | { type: 'student'; id: number }
+  | { type: 'tag'; id: number }
+  | { type: 'AND' }
+  | { type: 'OR' }
+  | { type: 'NOT' }
+  | { type: 'LEFT_PAREN' }
+  | { type: 'RIGHT_PAREN' }
 
 export interface Relation {
   id: number
   entries: RelationEntry[]
+  priority: number
+}
+
+export interface ParsedRelation {
+  id: number
+  entries: ParsedRelationEntry[]
   priority: number
 }
