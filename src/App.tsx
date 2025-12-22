@@ -26,6 +26,12 @@ function App() {
     localStorage.setItem('tags', JSON.stringify(tags))
   }, [tags])
 
+  // Clean up unused tags whenever students change
+  useEffect(() => {
+    const usedTagIds = new Set(students.flatMap(s => s.tags))
+    setTags(prevTags => prevTags.filter(tag => usedTagIds.has(tag.id)))
+  }, [JSON.stringify(students)])
+
   const addStudent = () => {
     const name = studentName.trim()
     if (name) {
