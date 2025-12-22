@@ -128,8 +128,7 @@ function AddRelation({ relationInput, onRelationInputChange, students, tags, onA
   }
 
   return (
-    <section className="mb-6 p-6 bg-white rounded-xl shadow-lg">
-      <h2 className="text-2xl font-semibold text-gray-800 mb-4">Add Relation</h2>
+    <>
       <p className="text-sm text-gray-600 mb-3">
         Type @ to mention students or tags. Use AND, OR, NOT to create relations.
       </p>
@@ -182,7 +181,7 @@ function AddRelation({ relationInput, onRelationInputChange, students, tags, onA
           Add Relation
         </button>
       </form>
-    </section>
+    </>
   )
 }
 
