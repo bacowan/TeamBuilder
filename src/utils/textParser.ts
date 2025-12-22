@@ -84,17 +84,3 @@ export const findMentionContext = (text: string, position: number) => {
     searchTerm: afterAt.toLowerCase()
   }
 }
-
-// Validate that relation entries only contain valid tokens
-export const validateRelationEntries = (entries: RelationEntry[]): boolean => {
-  const validTextValues = ['NOT', 'OR', 'AND', '(', ')']
-
-  return !entries.some(entry => {
-    if (entry.type === 'text') {
-      const trimmed = entry.value.trim()
-      // Allow empty/whitespace text or valid token text
-      return trimmed !== '' && !validTextValues.includes(trimmed)
-    }
-    return false
-  })
-}

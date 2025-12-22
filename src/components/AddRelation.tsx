@@ -1,6 +1,5 @@
 import { RelationEntry, Student, Tag } from '../types'
 import MentionInput from './MentionInput'
-import { validateRelationEntries } from '../utils/textParser'
 
 interface AddRelationProps {
   relationInput: RelationEntry[]
@@ -17,9 +16,6 @@ function AddRelation({ relationInput, onRelationInputChange, priority, onPriorit
     e.preventDefault()
     onAddRelation()
   }
-
-  const isValid = validateRelationEntries(relationInput)
-  const hasContent = relationInput.length > 0
 
   return (
     <>
@@ -48,15 +44,8 @@ function AddRelation({ relationInput, onRelationInputChange, priority, onPriorit
             tags={tags}
             placeholder="e.g., NOT (@Kakeru AND @Kazuki)"
           />
-          {hasContent && !isValid && (
-            <p className="text-xs text-red-600 mt-1">Invalid relation: contains unrecognized text</p>
-          )}
         </div>
-        <button
-          type="submit"
-          disabled={!isValid || !hasContent}
-          className="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors shadow-md self-end disabled:bg-gray-400 disabled:cursor-not-allowed"
-        >
+        <button type="submit" className="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors shadow-md self-end">
           Add Relation
         </button>
       </form>
