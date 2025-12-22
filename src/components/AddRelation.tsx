@@ -81,7 +81,13 @@ function AddRelation({ relationInput, onRelationInputChange, students, tags, onA
 
     const { atIndex } = context
     const before = displayValue.slice(0, atIndex)
-    const after = displayValue.slice(cursorPosition)
+
+    // Find the end of the current mention (space, special char, or end of string)
+    const afterCursor = displayValue.slice(cursorPosition)
+    const endMatch = afterCursor.match(/^[^\s()[\]{}|&!@]*/)
+    const mentionEndOffset = endMatch ? endMatch[0].length : 0
+    const after = displayValue.slice(cursorPosition + mentionEndOffset)
+
     const mention = `@${suggestion.name}`
     const newText = before + mention + ' ' + after
 
