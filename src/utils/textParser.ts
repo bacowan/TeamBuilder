@@ -1,4 +1,4 @@
-import { RelationEntry, Student, Tag, Relation, ParsedRelation } from '../types'
+import { RelationEntry, Student, Tag, Relation, ParsedRelation, ParsedRelationEntry } from '../types'
 
 // Convert text entries to string
 export const textEntriesToString = (
@@ -87,15 +87,95 @@ export const findMentionContext = (text: string, position: number) => {
 
 // Parse relation into validated relation with tokens (AND, OR, NOT, parens)
 // Returns null if the relation is invalid
-export const parseRelation = (relation: Relation, students: Student[], tags: Tag[]): ParsedRelation | null => {
-  // TODO: Implement parsing logic
-  return null
+export const parseRelation = (relation: Relation): ParsedRelation | null => {
+  const res: ParsedRelation = {
+    id: relation.id,
+    entries: [],
+    priority: relation.priority
+  }
+
+  for (const entry of relation.entries) {
+    if (entry.type === "text") {
+      let i = 0;
+      let text = "";
+      while (i < entry.value.length) {
+        // parenthesis
+        if (entry.value[i] === "(" || entry.value[i] === ")") {
+          if (text.toUpperCase() === "AND") {
+            res.entries.push({ type: 'AND' });
+          } else if (text.toUpperCase() === "OR") {
+            res.entries.push({ type: 'OR' });
+          } else if (text.toUpperCase() === "NOT") {
+            res.entries.push({ type: 'NOT' });
+          } else if (text.length > 0) {
+            // invalid token before parenthesis
+            return null;
+          }
+          res.entries.push({ type: entry.value[i] });
+        }
+        // word terminator
+        else if (/\s/.test(entry.value[i]) || i === entry.value.length - 1) {
+          if (text.toUpperCase() === "AND") {
+            res.entries.push({ type: 'AND' });
+          } else if (text.toUpperCase() === "OR") {
+            res.entries.push({ type: 'OR' });
+          } else if (text.toUpperCase() === "NOT") {
+            res.entries.push({ type: 'NOT' });
+          } else {
+            // invalid token
+            return null;
+          }
+          text = "";
+        }
+        else {
+          text += entry.value[i];
+        }
+
+      }
+    }
+    else {
+      res.entries.push(entry);
+    }
+  }
+  return res;
 }
 
 // Validate relation entries using parseRelation
-export const validateRelationEntries = (entries: RelationEntry[]): boolean => {
-  if (entries.length === 0) return false
+export const validateRelationEntries = (entries: Relation): boolean => {
+  const parsed = parseRelation(entries);
+  if (parsed === null) {
+    return false;
+  }
 
-  // For now, check if all entries are either student or tag (no text entries allowed)
-  return entries.every(entry => entry.type === 'student' || entry.type === 'tag')
+  let openParenthesis = 0;
+  let previousEntryType: "student" | "tag" | "AND" | "OR" | "NOT" | "(" | ")" | null = null;
+  for (const entry of parsed.entries) {
+    if (entry.type === "(") {
+      openParenthesis++;
+    }
+    else if (entry.type === ")") {
+      if (openParenthesis === 0) {
+        return false; // Unmatched closing parenthesis
+      }
+      openParenthesis--;
+    }
+    else if (entry.type === "AND" || entry.type === "OR") {
+      if (previousEntryType === null || previousEntryType === "AND" || previousEntryType === "OR" || previousEntryType === "NOT" || previousEntryType === "(") {
+        return false; // AND/OR cannot be first or follow AND/OR/NOT/(
+      }
+    }
+    else if (entry.type === "NOT") {
+      if (previousEntryType === "student" || previousEntryType === "tag" || previousEntryType === ")") {
+        return false; // NOT cannot follow student/tag/)
+      }
+    }
+
+    previousEntryType = entry.type;
+  }
+
+  if (openParenthesis !== 0 || previousEntryType === "AND" || previousEntryType === "OR" || previousEntryType === "NOT") {
+    return false;
+  }
+
+  return true;
 }

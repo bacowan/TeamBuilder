@@ -27,8 +27,8 @@ export type ParsedRelationEntry =
   | { type: 'AND' }
   | { type: 'OR' }
   | { type: 'NOT' }
-  | { type: 'LEFT_PAREN' }
-  | { type: 'RIGHT_PAREN' }
+  | { type: '(' }
+  | { type: ')' }
 
 export interface Relation {
   id: number
