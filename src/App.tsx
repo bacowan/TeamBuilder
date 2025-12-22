@@ -19,6 +19,7 @@ function App() {
   )
   const [studentName, setStudentName] = useState('')
   const [relationInput, setRelationInput] = useState<RelationEntry[]>([])
+  const [relationPriority, setRelationPriority] = useState(1)
   const [numTeams, setNumTeams] = useState('')
 
   // Save to localStorage whenever students or tags change
@@ -99,23 +100,25 @@ function App() {
       setRelations([])
       setStudentName('')
       setRelationInput([])
+      setRelationPriority(1)
       setNumTeams('')
     }
   }
 
   const handleAddRelation = () => {
-    if (relationInput.length > 0) {
+    if (relationInput.length > 0 && relationPriority > 0) {
       setRelations(prev => {
         const id = prev.length ? Math.max(...prev.map(r => r.id)) + 1 : 0
-        return [...prev, { id, entries: relationInput }]
+        return [...prev, { id, entries: relationInput, priority: relationPriority }]
       })
       setRelationInput([])
+      setRelationPriority(1)
     }
   }
 
-  const updateRelation = (id: number, entries: RelationEntry[]) => {
+  const updateRelation = (id: number, entries: RelationEntry[], priority: number) => {
     setRelations(prev => prev.map(r =>
-      r.id === id ? { ...r, entries } : r
+      r.id === id ? { ...r, entries, priority } : r
     ))
   }
 
@@ -158,6 +161,8 @@ function App() {
           <AddRelation
             relationInput={relationInput}
             onRelationInputChange={setRelationInput}
+            priority={relationPriority}
+            onPriorityChange={setRelationPriority}
             students={students}
             tags={tags}
             onAddRelation={handleAddRelation}

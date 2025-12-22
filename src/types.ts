@@ -24,4 +24,5 @@ export type RelationEntry =
 export interface Relation {
   id: number
   entries: RelationEntry[]
+  priority: number
 }

@@ -5,7 +5,7 @@ interface RelationItemProps {
   relation: Relation
   students: Student[]
   tags: Tag[]
-  onUpdateRelation: (id: number, entries: RelationEntry[]) => void
+  onUpdateRelation: (id: number, entries: RelationEntry[], priority: number) => void
   onDeleteRelation: (id: number) => void
 }
 
@@ -13,9 +13,17 @@ function RelationItem({ relation, students, tags, onUpdateRelation, onDeleteRela
   return (
     <li className="border border-gray-200 rounded-lg p-4 bg-gray-50">
       <div className="flex gap-2 items-center">
+        <input
+          type="number"
+          value={relation.priority}
+          onChange={(e) => onUpdateRelation(relation.id, relation.entries, parseInt(e.target.value) || 1)}
+          placeholder="Priority"
+          min="1"
+          className="w-24 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+        />
         <MentionInput
           value={relation.entries}
-          onChange={(entries) => onUpdateRelation(relation.id, entries)}
+          onChange={(entries) => onUpdateRelation(relation.id, entries, relation.priority)}
           students={students}
           tags={tags}
           placeholder="e.g., NOT (@Kakeru AND @Kazuki)"

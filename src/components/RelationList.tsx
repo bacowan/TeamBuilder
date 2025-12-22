@@ -5,7 +5,7 @@ interface RelationListProps {
   relations: Relation[]
   students: Student[]
   tags: Tag[]
-  onUpdateRelation: (id: number, entries: RelationEntry[]) => void
+  onUpdateRelation: (id: number, entries: RelationEntry[], priority: number) => void
   onDeleteRelation: (id: number) => void
 }
 
