@@ -8,15 +8,21 @@ interface AddRelationProps {
   onRelationInputChange: (relation: RelationEntry[]) => void
   students: Student[]
   tags: Tag[]
+  onAddRelation: () => void
 }
 
-function AddRelation({ relationInput, onRelationInputChange, students, tags }: AddRelationProps) {
+function AddRelation({ relationInput, onRelationInputChange, students, tags, onAddRelation }: AddRelationProps) {
   const [displayValue, setDisplayValue] = useState(textEntriesToString(relationInput, students, tags))
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [cursorPosition, setCursorPosition] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    onAddRelation()
+  }
 
   // Sync displayValue with relationInput changes from parent
   useEffect(() => {
@@ -92,21 +98,21 @@ function AddRelation({ relationInput, onRelationInputChange, students, tags }: A
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!showSuggestions) return
-
-    if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      setSelectedIndex(prev => (prev + 1) % suggestions.length)
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      setSelectedIndex(prev => (prev - 1 + suggestions.length) % suggestions.length)
-    } else if (e.key === 'Enter' || e.key === 'Tab') {
-      if (suggestions.length > 0) {
+    if (showSuggestions) {
+      if (e.key === 'ArrowDown') {
         e.preventDefault()
-        insertMention(suggestions[selectedIndex])
+        setSelectedIndex(prev => (prev + 1) % suggestions.length)
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setSelectedIndex(prev => (prev - 1 + suggestions.length) % suggestions.length)
+      } else if (e.key === 'Enter' || e.key === 'Tab') {
+        if (suggestions.length > 0) {
+          e.preventDefault()
+          insertMention(suggestions[selectedIndex])
+        }
+      } else if (e.key === 'Escape') {
+        setShowSuggestions(false)
       }
-    } else if (e.key === 'Escape') {
-      setShowSuggestions(false)
     }
   }
 
@@ -127,7 +133,7 @@ function AddRelation({ relationInput, onRelationInputChange, students, tags }: A
       <p className="text-sm text-gray-600 mb-3">
         Type @ to mention students or tags. Use AND, OR, NOT to create relations.
       </p>
-      <div className="relative flex gap-2">
+      <form onSubmit={handleSubmit} className="relative flex gap-2">
         <div className="flex-1 relative">
           <div className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[42px] pointer-events-none">
             {relationInput.map((entry, index) => {
@@ -172,10 +178,10 @@ function AddRelation({ relationInput, onRelationInputChange, students, tags }: A
             />
           )}
         </div>
-        <button className="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors shadow-md">
+        <button type="submit" className="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors shadow-md">
           Add Relation
         </button>
-      </div>
+      </form>
     </section>
   )
 }

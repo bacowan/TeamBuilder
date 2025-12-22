@@ -21,10 +21,9 @@ function StudentList({ students, tags, onUpdateStudentName, onDeleteStudent, onA
     }
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent, studentId: number) => {
-    if (e.key === 'Enter') {
-      handleAddTag(studentId)
-    }
+  const handleTagSubmit = (e: React.FormEvent, studentId: number) => {
+    e.preventDefault()
+    handleAddTag(studentId)
   }
 
   // Helper to get tag name by ID
@@ -76,22 +75,21 @@ function StudentList({ students, tags, onUpdateStudentName, onDeleteStudent, onA
           )}
 
           {/* Add tag input */}
-          <div className="flex gap-2">
+          <form onSubmit={(e) => handleTagSubmit(e, student.id)} className="flex gap-2">
             <input
               type="text"
               value={tagInputs[student.id] || ''}
               onChange={(e) => setTagInputs({ ...tagInputs, [student.id]: e.target.value })}
-              onKeyDown={(e) => handleKeyDown(e, student.id)}
               placeholder="Add tag..."
               className="flex-1 px-3 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white"
             />
             <button
-              onClick={() => handleAddTag(student.id)}
+              type="submit"
               className="px-4 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
             >
               Add Tag
             </button>
-          </div>
+          </form>
         </li>
       ))}
     </ul>

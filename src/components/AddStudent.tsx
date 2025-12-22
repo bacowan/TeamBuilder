@@ -5,10 +5,9 @@ interface AddStudentProps {
 }
 
 function AddStudent({ studentName, onStudentNameChange, onAddStudent }: AddStudentProps) {
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      onAddStudent()
-    }
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    onAddStudent()
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -18,22 +17,21 @@ function AddStudent({ studentName, onStudentNameChange, onAddStudent }: AddStude
   }
 
   return (
-    <div className="flex gap-2 mb-4">
+    <form onSubmit={handleSubmit} className="flex gap-2 mb-4">
       <input
         type="text"
         value={studentName}
         onChange={handleChange}
-        onKeyDown={handleKeyDown}
         placeholder="Enter student name (no spaces)"
         className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
       <button
-        onClick={onAddStudent}
+        type="submit"
         className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-md"
       >
         Add Student
       </button>
-    </div>
+    </form>
   )
 }
 
