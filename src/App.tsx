@@ -3,8 +3,9 @@ import Header from './components/Header.tsx'
 import AddStudent from './components/AddStudent.tsx'
 import StudentList from './components/StudentList.tsx'
 import AddRelation from './components/AddRelation.tsx'
+import RelationList from './components/RelationList.tsx'
 import GenerateTeams from './components/GenerateTeams.tsx'
-import { Student, Tag, RelationEntry } from './types'
+import { Student, Tag, RelationEntry, Relation } from './types'
 
 function App() {
   const [students, setStudents] = useState<Student[]>(() =>
@@ -12,6 +13,9 @@ function App() {
   )
   const [tags, setTags] = useState<Tag[]>(() =>
     JSON.parse(localStorage.getItem('tags') || '[]') as Tag[]
+  )
+  const [relations, setRelations] = useState<Relation[]>(() =>
+    JSON.parse(localStorage.getItem('relations') || '[]') as Relation[]
   )
   const [studentName, setStudentName] = useState('')
   const [relationInput, setRelationInput] = useState<RelationEntry[]>([])
@@ -25,6 +29,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem('tags', JSON.stringify(tags))
   }, [tags])
+
+  useEffect(() => {
+    localStorage.setItem('relations', JSON.stringify(relations))
+  }, [relations])
 
   // Clean up unused tags whenever students change
   useEffect(() => {
@@ -88,6 +96,7 @@ function App() {
       localStorage.clear()
       setStudents([])
       setTags([])
+      setRelations([])
       setStudentName('')
       setRelationInput([])
       setNumTeams('')
@@ -95,8 +104,23 @@ function App() {
   }
 
   const handleAddRelation = () => {
-    // TODO: Implement relation logic
-    console.log('Add relation:', relationInput)
+    if (relationInput.length > 0) {
+      setRelations(prev => {
+        const id = prev.length ? Math.max(...prev.map(r => r.id)) + 1 : 0
+        return [...prev, { id, entries: relationInput }]
+      })
+      setRelationInput([])
+    }
+  }
+
+  const updateRelation = (id: number, entries: RelationEntry[]) => {
+    setRelations(prev => prev.map(r =>
+      r.id === id ? { ...r, entries } : r
+    ))
+  }
+
+  const deleteRelation = (id: number) => {
+    setRelations(prev => prev.filter(r => r.id !== id))
   }
 
   const handleGenerateTeams = () => {
@@ -129,7 +153,8 @@ function App() {
         </section>
 
         <section className="mb-6 p-6 bg-white rounded-xl shadow-lg">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4">Add Relation</h2>
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4">Relations</h2>
+
           <AddRelation
             relationInput={relationInput}
             onRelationInputChange={setRelationInput}
@@ -137,6 +162,18 @@ function App() {
             tags={tags}
             onAddRelation={handleAddRelation}
           />
+
+          {relations.length > 0 && (
+            <div className="mt-4">
+              <RelationList
+                relations={relations}
+                students={students}
+                tags={tags}
+                onUpdateRelation={updateRelation}
+                onDeleteRelation={deleteRelation}
+              />
+            </div>
+          )}
         </section>
 
         <section className="mb-6 p-6 bg-white rounded-xl shadow-lg">

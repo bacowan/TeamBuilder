@@ -20,3 +20,8 @@ export type RelationEntry =
   { type: 'text'; value: string }
   | { type: 'student'; id: number }
   | { type: 'tag'; id: number }
+
+export interface Relation {
+  id: number
+  entries: RelationEntry[]
+}
