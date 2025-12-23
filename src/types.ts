@@ -58,3 +58,7 @@ export type ASTNode = {
     type: 'STUDENT' | 'TAG';
     id: number
   }
+
+export interface Team {
+  students: string[]
+}

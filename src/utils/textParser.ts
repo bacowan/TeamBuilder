@@ -1,4 +1,4 @@
-import { RelationEntry, Student, Tag, Relation, TokenizedRelationEntry, ASTNode, TokenType } from '../types'
+import { RelationEntry, Student, Tag, Relation, TokenizedRelationEntry, ASTNode, TokenType, Team } from '../types'
 
 // Convert text entries to string
 export const textEntriesToString = (
@@ -237,7 +237,7 @@ const createAbstractSyntaxTreeForTokens = (tokens: TokenizedRelationEntry[]): AS
       id: tokens[0].id
     }
   }
-  
+
   throw new Error("Invalid token sequence");
 }
 
@@ -261,4 +261,9 @@ export const createAbstractSyntaxTree = (relations: Relation[]): ASTNode => {
       right: createAbstractSyntaxTreeForRelation(curr)
     }), createAbstractSyntaxTreeForRelation(relations[0]));
   }
+}
+
+export const generateTeams = (relations: Relation[], numTeams: number, students: Student[]): Team[] => {
+  const ast = createAbstractSyntaxTree(relations);
+  return [];
 }
