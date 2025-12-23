@@ -1,4 +1,4 @@
-import { RelationEntry, Student, Tag, Relation, ParsedRelation, ParsedRelationEntry } from '../types'
+import { RelationEntry, Student, Tag, Relation, TokenizedRelationEntry } from '../types'
 
 // Convert text entries to string
 export const textEntriesToString = (
@@ -85,71 +85,85 @@ export const findMentionContext = (text: string, position: number) => {
   }
 }
 
-// Parse relation into validated relation with tokens (AND, OR, NOT, parens)
-// Returns null if the relation is invalid
-export const parseRelation = (relation: Relation): ParsedRelation | null => {
-  const res: ParsedRelation = {
-    id: relation.id,
-    entries: [],
-    priority: relation.priority
-  }
+const tokenizeRelationEntry = (text: string): TokenizedRelationEntry[] | null => {
+  const res: TokenizedRelationEntry[] = [];
+  let currentText = "";
 
-  for (const entry of relation.entries) {
-    if (entry.type === "text") {
-      let i = 0;
-      let text = "";
-      while (i < entry.value.length) {
-        // parenthesis
-        if (entry.value[i] === "(" || entry.value[i] === ")") {
-          if (text.toUpperCase() === "AND") {
-            res.entries.push({ type: 'AND' });
-          } else if (text.toUpperCase() === "OR") {
-            res.entries.push({ type: 'OR' });
-          } else if (text.toUpperCase() === "NOT") {
-            res.entries.push({ type: 'NOT' });
-          } else if (text.length > 0) {
-            // invalid token before parenthesis
-            return null;
-          }
-          res.entries.push({ type: entry.value[i] });
-        }
-        // word terminator
-        else if (/\s/.test(entry.value[i]) || i === entry.value.length - 1) {
-          if (text.toUpperCase() === "AND") {
-            res.entries.push({ type: 'AND' });
-          } else if (text.toUpperCase() === "OR") {
-            res.entries.push({ type: 'OR' });
-          } else if (text.toUpperCase() === "NOT") {
-            res.entries.push({ type: 'NOT' });
-          } else {
-            // invalid token
-            return null;
-          }
-          text = "";
+  for (let i = 0; i < text.length; i++) {
+    const currentCharacter = text[i];
+    if (/\s/.test(currentCharacter)) {
+      // ignore if nothing came before this space
+      if (currentText.length > 0) {
+        if (currentText === "AND" || currentText === "OR" || currentText === "NOT") {
+          res.push({ type: currentText });
+          currentText = "";
         }
         else {
-          text += entry.value[i];
+          return null;
         }
-
+      }
+    }
+    else if (currentCharacter === "(" || currentCharacter === ")") {
+      if (currentText === "AND" || currentText === "OR" || currentText === "NOT") {
+        res.push({ type: currentText });
+        res.push({ type: currentCharacter });
+        currentText = "";
+      }
+      else if (currentText.length === 0) {
+        res.push({ type: currentCharacter });
       }
     }
     else {
-      res.entries.push(entry);
+      currentText += currentCharacter.toUpperCase();
     }
   }
+
+  // if the string ends without whitespace or parenthesis
+  if (currentText.length > 0) {
+    if (currentText === "AND" || currentText === "OR" || currentText === "NOT") {
+      res.push({ type: currentText });
+    }
+    else {
+      return null;
+    }
+  }
+
+  return res;
+}
+
+// Parse relation into validated relation with tokens (AND, OR, NOT, parens)
+// Returns null if the relation is invalid
+export const tokenizeRelation = (entries: RelationEntry[]): TokenizedRelationEntry[] | null => {
+  const res: TokenizedRelationEntry[] = [];
+
+  for (const entry of entries) {
+    if (entry.type === "text") {
+      const tokenizedEntries = tokenizeRelationEntry(entry.value);
+      if (tokenizedEntries === null) {
+        return null;
+      }
+      else {
+        res.push(...tokenizedEntries);
+      }
+    }
+    else {
+      res.push(entry);
+    }
+  }
+  
   return res;
 }
 
 // Validate relation entries using parseRelation
-export const validateRelationEntries = (entries: Relation): boolean => {
-  const parsed = parseRelation(entries);
+export const validateRelationEntries = (entries: RelationEntry[]): boolean => {
+  const parsed = tokenizeRelation(entries);
   if (parsed === null) {
     return false;
   }
 
   let openParenthesis = 0;
   let previousEntryType: "student" | "tag" | "AND" | "OR" | "NOT" | "(" | ")" | null = null;
-  for (const entry of parsed.entries) {
+  for (const entry of parsed) {
     if (entry.type === "(") {
       openParenthesis++;
     }

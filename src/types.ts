@@ -21,7 +21,13 @@ export type RelationEntry =
   | { type: 'student'; id: number }
   | { type: 'tag'; id: number }
 
-export type ParsedRelationEntry =
+export interface Relation {
+  id: number
+  entries: RelationEntry[]
+  priority: number
+}
+
+export type TokenizedRelationEntry =
   | { type: 'student'; id: number }
   | { type: 'tag'; id: number }
   | { type: 'AND' }
@@ -29,15 +35,3 @@ export type ParsedRelationEntry =
   | { type: 'NOT' }
   | { type: '(' }
   | { type: ')' }
-
-export interface Relation {
-  id: number
-  entries: RelationEntry[]
-  priority: number
-}
-
-export interface ParsedRelation {
-  id: number
-  entries: ParsedRelationEntry[]
-  priority: number
-}
