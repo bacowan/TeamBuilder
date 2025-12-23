@@ -1,4 +1,6 @@
 import { RelationEntry, Student, Tag, Relation, TokenizedRelationEntry, ASTNode, TokenType, Team } from '../types'
+import * as LPModel from 'lp-model'
+import {v4 as uuidv4} from 'uuid';
 
 // Convert text entries to string
 export const textEntriesToString = (
@@ -208,6 +210,7 @@ const createAbstractSyntaxTreeForTokens = (tokens: TokenizedRelationEntry[], stu
     else if (parenthesisCount === 0) {
       if (tokenType === "AND" || tokenType === "OR") {
         return {
+          id: uuidv4(),
           type: tokenType,
           left: createAbstractSyntaxTreeForTokens(tokens.slice(0, i), students),
           right: createAbstractSyntaxTreeForTokens(tokens.slice(i + 1), students)
@@ -220,6 +223,7 @@ const createAbstractSyntaxTreeForTokens = (tokens: TokenizedRelationEntry[], stu
   // if there are no top level ands or ors, check if this is a not
   if (firstToken.type === "NOT") {
     return {
+      id: uuidv4(),
       type: "NOT",
       child: createAbstractSyntaxTreeForTokens(tokens.slice(1), students)
     }
@@ -242,10 +246,14 @@ const createAbstractSyntaxTreeForTokens = (tokens: TokenizedRelationEntry[], stu
   if (firstToken.type === "TAG") {
     const studentsWithTag = students.filter(s => s.tags.includes(firstToken.id));
     if (studentsWithTag.length === 0) {
-      return { type: "TRUE" };
+      return {
+        type: "TRUE",
+        id: uuidv4()
+      };
     }
     else {
       return studentsWithTag.slice(1).reduce<ASTNode>((acc, curr) => ({
+        id: uuidv4(),
         type: "OR",
         left: acc,
         right: {
@@ -277,6 +285,7 @@ export const createAbstractSyntaxTree = (relations: Relation[], students: Studen
   }
   else {
     return relations.slice(1).reduce((acc, curr) => ({
+      id: uuidv4(),
       type: 'AND',
       left: acc,
       right: createAbstractSyntaxTreeForRelation(curr, students)
@@ -284,7 +293,74 @@ export const createAbstractSyntaxTree = (relations: Relation[], students: Studen
   }
 }
 
+const getVariableForAstNode = (node: ASTNode, model: LPModel.Model, variables: {[key: string]: LPModel.Variable}): LPModel.Variable => {
+  if (variables[node.id]) {
+    return variables[node.id];
+  }
+
+  const variable = model.addVar({ name: node.id, type: "binary" });
+  variables[node.id] = variable;
+  return variable;
+}
+
+const addConstraintsToModel = (node: ASTNode, model: LPModel.Model, variables: {[key: string]: LPModel.Variable}) => {
+  if (node.type === "AND") {
+    const nodeVar = getVariableForAstNode(node, model, variables);
+    const leftVar = getVariableForAstNode(node.left, model, variables);
+    const rightVar = getVariableForAstNode(node.right, model, variables);
+    // Constraints for AND:
+    // parent ≤ leftChild
+    // parent ≤ rightChild
+    // parent ≥ leftChild + rightChild - 1
+    model.addConstr([[1, nodeVar], [-1, leftVar], "<=", 0])
+    model.addConstr([[1, nodeVar], [-1, rightVar], "<=", 0])
+    model.addConstr([[1, nodeVar, [-1, leftVar], [-1, rightVar]], "GE", -1])
+    addConstraintsToModel(node.left, model, variables)
+    addConstraintsToModel(node.right, model, variables)
+  }
+  else if (node.type === "OR") {
+    const nodeVar = getVariableForAstNode(node, model, variables);
+    const leftVar = getVariableForAstNode(node.left, model, variables);
+    const rightVar = getVariableForAstNode(node.right, model, variables);
+    // Constraints for OR:
+    // parent ≥ leftChild
+    // parent ≥ rightChild
+    // parent ≤ leftChild + rightChild
+    model.addConstr([[1, nodeVar], [-1, leftVar], ">=", 0])
+    model.addConstr([[1, nodeVar], [-1, rightVar], ">=", 0])
+    model.addConstr([[1, nodeVar, [-1, leftVar], [-1, rightVar]], "LE", 0])
+    addConstraintsToModel(node.left, model, variables)
+    addConstraintsToModel(node.right, model, variables)
+  }
+  else if (node.type === "NOT") {
+    const nodeVar = getVariableForAstNode(node, model, variables);
+    const childVar = getVariableForAstNode(node.child, model, variables);
+    // Constraints for NOT:
+    // parent + child = 1
+    model.addConstr([[1, nodeVar], [1, childVar], "=", 1])
+    addConstraintsToModel(node.child, model, variables)
+  }
+  
+}
+
+const setModelObjective = (relations: Relation[], model: LPModel.Model, variables: {[key: string]: LPModel.Variable}, students: Student[]) => {
+  const objectiveParams = [];
+  for (const relation of relations) {
+    objectiveParams.push([relation.priority, variables[relation.id]]);
+  }
+  model.setObjective(objectiveParams, "maximize");
+}
+
 export const generateTeams = (relations: Relation[], numTeams: number, students: Student[]): Team[] => {
   const ast = createAbstractSyntaxTree(relations, students);
+  const model = new LPModel.Model();
+  const variables: {[key: string]: LPModel.Variable} = {};
+
+  addConstraintsToModel(ast, model, variables);
+  setModelObjective(relations, model, variables, students);
+
+
+
+
   return [];
 }

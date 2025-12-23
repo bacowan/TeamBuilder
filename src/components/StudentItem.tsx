@@ -4,10 +4,10 @@ import { useState, useRef, useEffect } from 'react'
 interface StudentItemProps {
   student: Student
   tags: Tag[]
-  onUpdateStudentName: (id: number, newName: string) => void
-  onDeleteStudent: (id: number) => void
-  onAddTag: (id: number, tagName: string) => void
-  onRemoveTag: (id: number, tagId: number) => void
+  onUpdateStudentName: (id: string, newName: string) => void
+  onDeleteStudent: (id: string) => void
+  onAddTag: (id: string, tagName: string) => void
+  onRemoveTag: (id: string, tagId: string) => void
 }
 
 function StudentItem({ student, tags, onUpdateStudentName, onDeleteStudent, onAddTag, onRemoveTag }: StudentItemProps) {
@@ -54,7 +54,7 @@ function StudentItem({ student, tags, onUpdateStudentName, onDeleteStudent, onAd
   }
 
   // Helper to get tag name by ID
-  const getTagName = (tagId: number): string => {
+  const getTagName = (tagId: string): string => {
     return tags.find(t => t.id === tagId)?.name || ''
   }
 

@@ -5,8 +5,8 @@ interface RelationListProps {
   relations: Relation[]
   students: Student[]
   tags: Tag[]
-  onUpdateRelation: (id: number, entries: RelationEntry[], priority: number) => void
-  onDeleteRelation: (id: number) => void
+  onUpdateRelation: (id: string, entries: RelationEntry[], priority: number) => void
+  onDeleteRelation: (id: string) => void
 }
 
 function RelationList({ relations, students, tags, onUpdateRelation, onDeleteRelation }: RelationListProps) {

@@ -6,6 +6,7 @@ import AddRelation from './components/AddRelation.tsx'
 import RelationList from './components/RelationList.tsx'
 import GenerateTeams from './components/GenerateTeams.tsx'
 import { Student, Tag, RelationEntry, Relation } from './types'
+import {v4 as uuidv4} from 'uuid';
 
 function App() {
   const [students, setStudents] = useState<Student[]>(() =>
@@ -45,31 +46,31 @@ function App() {
     const name = studentName.trim()
     if (name) {
       setStudents(prev => {
-        const id = prev.length ? Math.max(...prev.map(s => s.id)) + 1 : 0
+        const id = uuidv4()
         return [...prev, { id, name, tags: [] }]
       })
       setStudentName('')
     }
   }
 
-  const deleteStudent = (id: number) => {
+  const deleteStudent = (id: string) => {
     setStudents(prev => prev.filter(s => s.id !== id))
   }
 
-  const updateStudentName = (id: number, newName: string) => {
+  const updateStudentName = (id: string, newName: string) => {
     setStudents(prev => prev.map(s =>
       s.id === id ? { ...s, name: newName.trim() } : s
     ))
   }
 
-  const addTag = (studentId: number, tagName: string) => {
+  const addTag = (studentId: string, tagName: string) => {
     const trimmedName = tagName.trim()
     if (!trimmedName) return
 
     // Find or create tag
     let tag = tags.find(t => t.name === trimmedName)
     if (!tag) {
-      const newTagId = tags.length ? Math.max(...tags.map(t => t.id)) + 1 : 0
+      const newTagId = uuidv4()
       tag = { id: newTagId, name: trimmedName }
       setTags(prev => [...prev, tag!])
     }
@@ -83,7 +84,7 @@ function App() {
     }))
   }
 
-  const removeTag = (studentId: number, tagId: number) => {
+  const removeTag = (studentId: string, tagId: string) => {
     setStudents(prev => prev.map(s => {
       if (s.id === studentId) {
         return { ...s, tags: s.tags.filter(t => t !== tagId) }
@@ -108,7 +109,7 @@ function App() {
   const handleAddRelation = () => {
     if (relationInput.length > 0 && relationPriority > 0) {
       setRelations(prev => {
-        const id = prev.length ? Math.max(...prev.map(r => r.id)) + 1 : 0
+        const id = uuidv4()
         return [...prev, { id, entries: relationInput, priority: relationPriority }]
       })
       setRelationInput([])
@@ -116,13 +117,13 @@ function App() {
     }
   }
 
-  const updateRelation = (id: number, entries: RelationEntry[], priority: number) => {
+  const updateRelation = (id: string, entries: RelationEntry[], priority: number) => {
     setRelations(prev => prev.map(r =>
       r.id === id ? { ...r, entries, priority } : r
     ))
   }
 
-  const deleteRelation = (id: number) => {
+  const deleteRelation = (id: string) => {
     setRelations(prev => prev.filter(r => r.id !== id))
   }
 

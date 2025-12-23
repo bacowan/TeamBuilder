@@ -4,10 +4,10 @@ import StudentItem from './StudentItem'
 interface StudentListProps {
   students: Student[]
   tags: Tag[]
-  onUpdateStudentName: (id: number, newName: string) => void
-  onDeleteStudent: (id: number) => void
-  onAddTag: (id: number, tagName: string) => void
-  onRemoveTag: (id: number, tagId: number) => void
+  onUpdateStudentName: (id: string, newName: string) => void
+  onDeleteStudent: (id: string) => void
+  onAddTag: (id: string, tagName: string) => void
+  onRemoveTag: (id: string, tagId: string) => void
 }
 
 function StudentList({ students, tags, onUpdateStudentName, onDeleteStudent, onAddTag, onRemoveTag }: StudentListProps) {

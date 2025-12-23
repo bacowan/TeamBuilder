@@ -1,35 +1,35 @@
 export interface Tag {
-  id: number
+  id: string
   name: string
 }
 
 export interface Student {
-  id: number
+  id: string
   name: string
-  tags: number[] // Array of tag IDs
+  tags: string[] // Array of tag IDs
 }
 
 export interface Suggestion {
   type: 'STUDENT' | 'TAG'
-  id: number
+  id: string
   name: string
   studentName?: string
 }
 
 export type RelationEntry =
   | { type: 'TEXT'; value: string }
-  | { type: 'STUDENT'; id: number }
-  | { type: 'TAG'; id: number }
+  | { type: 'STUDENT'; id: string }
+  | { type: 'TAG'; id: string }
 
 export interface Relation {
-  id: number
+  id: string
   entries: RelationEntry[]
   priority: number
 }
 
 export type TokenizedRelationEntry =
-  | { type: 'STUDENT'; id: number }
-  | { type: 'TAG'; id: number }
+  | { type: 'STUDENT'; id: string }
+  | { type: 'TAG'; id: string }
   | { type: 'AND' }
   | { type: 'OR' }
   | { type: 'NOT' }
@@ -45,7 +45,7 @@ export type TokenType =
   | '('
   | ')'
 
-export type ASTNode = {
+export type ASTNode = ({
     type: 'AND' | 'OR'
     left: ASTNode
     right: ASTNode
@@ -56,11 +56,10 @@ export type ASTNode = {
   }
   | {
     type: 'STUDENT';
-    id: number
   }
   | {
     type: 'TRUE'
-  }
+  }) & { id: string }
 
 export interface Team {
   students: string[]
