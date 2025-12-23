@@ -194,7 +194,7 @@ export const validateRelationEntries = (entries: RelationEntry[]): boolean => {
   return true;
 }
 
-const createAbstractSyntaxTreeForTokens = (tokens: TokenizedRelationEntry[]): ASTNode => {
+const createAbstractSyntaxTreeForTokens = (tokens: TokenizedRelationEntry[], students: Student[]): ASTNode => {
   // split on ands and ors
   let parenthesisCount = 0;
   for (let i = 0; i < tokens.length; i++) {
@@ -209,61 +209,82 @@ const createAbstractSyntaxTreeForTokens = (tokens: TokenizedRelationEntry[]): AS
       if (tokenType === "AND" || tokenType === "OR") {
         return {
           type: tokenType,
-          left: createAbstractSyntaxTreeForTokens(tokens.slice(0, i)),
-          right: createAbstractSyntaxTreeForTokens(tokens.slice(i + 1))
+          left: createAbstractSyntaxTreeForTokens(tokens.slice(0, i), students),
+          right: createAbstractSyntaxTreeForTokens(tokens.slice(i + 1), students)
         }
       }
     }
   }
 
-  const tokenType = tokens[0].type;
+  const firstToken = tokens[0];
   // if there are no top level ands or ors, check if this is a not
-  if (tokenType === "NOT") {
+  if (firstToken.type === "NOT") {
     return {
       type: "NOT",
-      child: createAbstractSyntaxTreeForTokens(tokens.slice(1))
+      child: createAbstractSyntaxTreeForTokens(tokens.slice(1), students)
     }
   }
 
   // if there are no ands, ors, or nots, remove any parenthesis
-  if (tokenType === "(" && tokens[tokens.length - 1].type === ")") {
-    return createAbstractSyntaxTreeForTokens(tokens.slice(1, tokens.length - 1));
+  if (firstToken.type === "(" && tokens[tokens.length - 1].type === ")") {
+    return createAbstractSyntaxTreeForTokens(tokens.slice(1, tokens.length - 1), students);
   }
 
   // otherwise this must be a student or tag
-  if (tokenType === "STUDENT" || tokenType === "TAG") {
+  if (firstToken.type === "STUDENT") {
     return {
-      type: tokenType,
-      id: tokens[0].id
+      type: firstToken.type,
+      id: firstToken.id
+    }
+  }
+
+  // tags are just treated as or statements of students with that tag
+  if (firstToken.type === "TAG") {
+    const studentsWithTag = students.filter(s => s.tags.includes(firstToken.id));
+    if (studentsWithTag.length === 0) {
+      return { type: "TRUE" };
+    }
+    else {
+      return studentsWithTag.slice(1).reduce<ASTNode>((acc, curr) => ({
+        type: "OR",
+        left: acc,
+        right: {
+          type: "STUDENT",
+          id: curr.id
+        }
+      }), {
+        type: "STUDENT",
+        id: studentsWithTag[0].id
+      });
     }
   }
 
   throw new Error("Invalid token sequence");
 }
 
-const createAbstractSyntaxTreeForRelation = (relation: Relation): ASTNode => {
+const createAbstractSyntaxTreeForRelation = (relation: Relation, students: Student[]): ASTNode => {
   const tokenized = tokenizeRelation(relation.entries);
   if (tokenized === null) {
     throw new Error("Invalid relation entries");
   }
 
-  return createAbstractSyntaxTreeForTokens(tokenized);
+  return createAbstractSyntaxTreeForTokens(tokenized, students);
 }
 
-export const createAbstractSyntaxTree = (relations: Relation[]): ASTNode => {
+export const createAbstractSyntaxTree = (relations: Relation[], students: Student[]): ASTNode => {
   if (relations.length === 1) {
-    return createAbstractSyntaxTreeForRelation(relations[0]);
+    return createAbstractSyntaxTreeForRelation(relations[0], students);
   }
   else {
     return relations.slice(1).reduce((acc, curr) => ({
       type: 'AND',
       left: acc,
-      right: createAbstractSyntaxTreeForRelation(curr)
-    }), createAbstractSyntaxTreeForRelation(relations[0]));
+      right: createAbstractSyntaxTreeForRelation(curr, students)
+    }), createAbstractSyntaxTreeForRelation(relations[0], students));
   }
 }
 
 export const generateTeams = (relations: Relation[], numTeams: number, students: Student[]): Team[] => {
-  const ast = createAbstractSyntaxTree(relations);
+  const ast = createAbstractSyntaxTree(relations, students);
   return [];
 }

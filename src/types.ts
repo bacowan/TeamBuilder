@@ -55,8 +55,11 @@ export type ASTNode = {
     child: ASTNode
   }
   | {
-    type: 'STUDENT' | 'TAG';
+    type: 'STUDENT';
     id: number
+  }
+  | {
+    type: 'TRUE'
   }
 
 export interface Team {
