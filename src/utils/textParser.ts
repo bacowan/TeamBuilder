@@ -255,7 +255,7 @@ export const createAbstractSyntaxTree = (relations: Relation[]): ASTNode => {
     return createAbstractSyntaxTreeForRelation(relations[0]);
   }
   else {
-    return relations.slice(0, -1).reduce((acc, curr) => ({
+    return relations.slice(1).reduce((acc, curr) => ({
       type: 'AND',
       left: acc,
       right: createAbstractSyntaxTreeForRelation(curr)
