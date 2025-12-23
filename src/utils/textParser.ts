@@ -1,4 +1,4 @@
-import { RelationEntry, Student, Tag, Relation, TokenizedRelationEntry } from '../types'
+import { RelationEntry, Student, Tag, Relation, TokenizedRelationEntry, ASTNode, TokenType } from '../types'
 
 // Convert text entries to string
 export const textEntriesToString = (
@@ -7,11 +7,11 @@ export const textEntriesToString = (
   tags: Tag[]
 ): string => {
   return entries.map(entry => {
-    if (entry.type === 'student') {
+    if (entry.type === 'STUDENT') {
       const student = students.find(s => s.id === entry.id)
       return student ? `@${student.name}` : ''
     }
-    if (entry.type === 'tag') {
+    if (entry.type === 'TAG') {
       const tag = tags.find(t => t.id === entry.id)
       return tag ? `@${tag.name}` : ''
     }
@@ -36,7 +36,7 @@ export const parseTextEntries = (
     if (match.index > lastIndex) {
       const textBefore = text.slice(lastIndex, match.index)
       if (textBefore) {
-        entries.push({ type: 'text', value: textBefore })
+        entries.push({ type: 'TEXT', value: textBefore })
       }
     }
 
@@ -46,12 +46,12 @@ export const parseTextEntries = (
     const tag = tags.find(t => t.name === mentionName)
 
     if (student) {
-      entries.push({ type: 'student', id: student.id })
+      entries.push({ type: 'STUDENT', id: student.id })
     } else if (tag) {
-      entries.push({ type: 'tag', id: tag.id })
+      entries.push({ type: 'TAG', id: tag.id })
     } else {
       // Unknown mention, treat as text
-      entries.push({ type: 'text', value: `@${mentionName}` })
+      entries.push({ type: 'TEXT', value: `@${mentionName}` })
     }
 
     lastIndex = match.index + match[0].length
@@ -61,11 +61,11 @@ export const parseTextEntries = (
   if (lastIndex < text.length) {
     const remaining = text.slice(lastIndex)
     if (remaining) {
-      entries.push({ type: 'text', value: remaining })
+      entries.push({ type: 'TEXT', value: remaining })
     }
   }
 
-  return entries.length > 0 ? entries : [{ type: 'text', value: text }]
+  return entries.length > 0 ? entries : [{ type: 'TEXT', value: text }]
 }
 
 // Find @ mention context at cursor position
@@ -137,7 +137,7 @@ export const tokenizeRelation = (entries: RelationEntry[]): TokenizedRelationEnt
   const res: TokenizedRelationEntry[] = [];
 
   for (const entry of entries) {
-    if (entry.type === "text") {
+    if (entry.type === "TEXT") {
       const tokenizedEntries = tokenizeRelationEntry(entry.value);
       if (tokenizedEntries === null) {
         return null;
@@ -162,7 +162,7 @@ export const validateRelationEntries = (entries: RelationEntry[]): boolean => {
   }
 
   let openParenthesis = 0;
-  let previousEntryType: "student" | "tag" | "AND" | "OR" | "NOT" | "(" | ")" | null = null;
+  let previousEntryType: TokenType | null = null;
   for (const entry of parsed) {
     if (entry.type === "(") {
       openParenthesis++;
@@ -179,7 +179,7 @@ export const validateRelationEntries = (entries: RelationEntry[]): boolean => {
       }
     }
     else if (entry.type === "NOT") {
-      if (previousEntryType === "student" || previousEntryType === "tag" || previousEntryType === ")") {
+      if (previousEntryType === "STUDENT" || previousEntryType === "TAG" || previousEntryType === ")") {
         return false; // NOT cannot follow student/tag/)
       }
     }
@@ -192,4 +192,73 @@ export const validateRelationEntries = (entries: RelationEntry[]): boolean => {
   }
 
   return true;
+}
+
+const createAbstractSyntaxTreeForTokens = (tokens: TokenizedRelationEntry[]): ASTNode => {
+  // split on ands and ors
+  let parenthesisCount = 0;
+  for (let i = 0; i < tokens.length; i++) {
+    const tokenType = tokens[i].type;
+    if (tokenType === "(") {
+      parenthesisCount++;
+    }
+    else if (tokenType === ")") {
+      parenthesisCount--;
+    }
+    else if (parenthesisCount === 0) {
+      if (tokenType === "AND" || tokenType === "OR") {
+        return {
+          type: tokenType,
+          left: createAbstractSyntaxTreeForTokens(tokens.slice(0, i)),
+          right: createAbstractSyntaxTreeForTokens(tokens.slice(i + 1))
+        }
+      }
+    }
+  }
+
+  const tokenType = tokens[0].type;
+  // if there are no top level ands or ors, check if this is a not
+  if (tokenType === "NOT") {
+    return {
+      type: "NOT",
+      child: createAbstractSyntaxTreeForTokens(tokens.slice(1))
+    }
+  }
+
+  // if there are no ands, ors, or nots, remove any parenthesis
+  if (tokenType === "(" && tokens[tokens.length - 1].type === ")") {
+    return createAbstractSyntaxTreeForTokens(tokens.slice(1, tokens.length - 1));
+  }
+
+  // otherwise this must be a student or tag
+  if (tokenType === "STUDENT" || tokenType === "TAG") {
+    return {
+      type: tokenType,
+      id: tokens[0].id
+    }
+  }
+  
+  throw new Error("Invalid token sequence");
+}
+
+const createAbstractSyntaxTreeForRelation = (relation: Relation): ASTNode => {
+  const tokenized = tokenizeRelation(relation.entries);
+  if (tokenized === null) {
+    throw new Error("Invalid relation entries");
+  }
+
+  return createAbstractSyntaxTreeForTokens(tokenized);
+}
+
+export const createAbstractSyntaxTree = (relations: Relation[]): ASTNode => {
+  if (relations.length === 1) {
+    return createAbstractSyntaxTreeForRelation(relations[0]);
+  }
+  else {
+    return relations.slice(0, -1).reduce((acc, curr) => ({
+      type: 'AND',
+      left: acc,
+      right: createAbstractSyntaxTreeForRelation(curr)
+    }), createAbstractSyntaxTreeForRelation(relations[0]));
+  }
 }

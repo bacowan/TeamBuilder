@@ -10,16 +10,16 @@ export interface Student {
 }
 
 export interface Suggestion {
-  type: 'student' | 'tag'
+  type: 'STUDENT' | 'TAG'
   id: number
   name: string
   studentName?: string
 }
 
 export type RelationEntry =
-  | { type: 'text'; value: string }
-  | { type: 'student'; id: number }
-  | { type: 'tag'; id: number }
+  | { type: 'TEXT'; value: string }
+  | { type: 'STUDENT'; id: number }
+  | { type: 'TAG'; id: number }
 
 export interface Relation {
   id: number
@@ -28,10 +28,33 @@ export interface Relation {
 }
 
 export type TokenizedRelationEntry =
-  | { type: 'student'; id: number }
-  | { type: 'tag'; id: number }
+  | { type: 'STUDENT'; id: number }
+  | { type: 'TAG'; id: number }
   | { type: 'AND' }
   | { type: 'OR' }
   | { type: 'NOT' }
   | { type: '(' }
   | { type: ')' }
+
+export type TokenType =
+  | 'STUDENT'
+  | 'TAG'
+  | 'AND'
+  | 'OR'
+  | 'NOT'
+  | '('
+  | ')'
+
+export type ASTNode = {
+    type: 'AND' | 'OR'
+    left: ASTNode
+    right: ASTNode
+  }
+  | {
+    type: 'NOT'
+    child: ASTNode
+  }
+  | {
+    type: 'STUDENT' | 'TAG';
+    id: number
+  }
