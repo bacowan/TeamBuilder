@@ -293,21 +293,21 @@ export const createAbstractSyntaxTree = (relations: Relation[], students: Studen
   }
 }
 
-const getVariableForAstNode = (node: ASTNode, model: LPModel.Model, variables: {[key: string]: LPModel.Variable}): LPModel.Variable => {
+const getVariableForAstNode = (node: ASTNode, group: number, model: LPModel.Model, variables: {[key: string]: LPModel.Variable}): LPModel.Variable => {
   if (variables[node.id]) {
     return variables[node.id];
   }
 
-  const variable = model.addVar({ name: node.id, type: "binary" });
+  const variable = model.addVar({ name: `${node.id}_group_${group}`, type: "binary" });
   variables[node.id] = variable;
   return variable;
 }
 
-const addConstraintsToModel = (node: ASTNode, model: LPModel.Model, variables: {[key: string]: LPModel.Variable}) => {
+const addAstConstraintsToModel = (node: ASTNode, model: LPModel.Model, variables: {[key: string]: LPModel.Variable}, group: number) => {
   if (node.type === "AND") {
-    const nodeVar = getVariableForAstNode(node, model, variables);
-    const leftVar = getVariableForAstNode(node.left, model, variables);
-    const rightVar = getVariableForAstNode(node.right, model, variables);
+    const nodeVar = getVariableForAstNode(node, group, model, variables);
+    const leftVar = getVariableForAstNode(node.left, group, model, variables);
+    const rightVar = getVariableForAstNode(node.right, group, model, variables);
     // Constraints for AND:
     // parent ≤ leftChild
     // parent ≤ rightChild
@@ -315,13 +315,13 @@ const addConstraintsToModel = (node: ASTNode, model: LPModel.Model, variables: {
     model.addConstr([[1, nodeVar], [-1, leftVar], "<=", 0])
     model.addConstr([[1, nodeVar], [-1, rightVar], "<=", 0])
     model.addConstr([[1, nodeVar, [-1, leftVar], [-1, rightVar]], "GE", -1])
-    addConstraintsToModel(node.left, model, variables)
-    addConstraintsToModel(node.right, model, variables)
+    addAstConstraintsToModel(node.left, model, variables, group)
+    addAstConstraintsToModel(node.right, model, variables, group)
   }
   else if (node.type === "OR") {
-    const nodeVar = getVariableForAstNode(node, model, variables);
-    const leftVar = getVariableForAstNode(node.left, model, variables);
-    const rightVar = getVariableForAstNode(node.right, model, variables);
+    const nodeVar = getVariableForAstNode(node, group, model, variables);
+    const leftVar = getVariableForAstNode(node.left, group, model, variables);
+    const rightVar = getVariableForAstNode(node.right, group, model, variables);
     // Constraints for OR:
     // parent ≥ leftChild
     // parent ≥ rightChild
@@ -329,18 +329,49 @@ const addConstraintsToModel = (node: ASTNode, model: LPModel.Model, variables: {
     model.addConstr([[1, nodeVar], [-1, leftVar], ">=", 0])
     model.addConstr([[1, nodeVar], [-1, rightVar], ">=", 0])
     model.addConstr([[1, nodeVar, [-1, leftVar], [-1, rightVar]], "LE", 0])
-    addConstraintsToModel(node.left, model, variables)
-    addConstraintsToModel(node.right, model, variables)
+    addAstConstraintsToModel(node.left, model, variables, group)
+    addAstConstraintsToModel(node.right, model, variables, group)
   }
   else if (node.type === "NOT") {
-    const nodeVar = getVariableForAstNode(node, model, variables);
-    const childVar = getVariableForAstNode(node.child, model, variables);
+    const nodeVar = getVariableForAstNode(node, group, model, variables);
+    const childVar = getVariableForAstNode(node.child, group, model, variables);
     // Constraints for NOT:
     // parent + child = 1
     model.addConstr([[1, nodeVar], [1, childVar], "=", 1])
-    addConstraintsToModel(node.child, model, variables)
+    addAstConstraintsToModel(node.child, model, variables, group)
   }
   
+}
+
+const addTeamSizeConstraintsToModel = (numTeams: number, students: Student[], model: LPModel.Model, variables: {[key: string]: LPModel.Variable}) => {
+  const minTeamSize = Math.floor(students.length / numTeams);
+  const maxTeamSize = Math.ceil(students.length / numTeams);
+
+  for (let i = 0; i < numTeams; i++) {
+    const greaterThanConstraint = [];
+    const lessThanConstraint = [];
+    for (const student of students) {
+      const studentGroupVar = getVariableForAstNode({ type: "STUDENT", id: student.id }, i, model, variables);
+      greaterThanConstraint.push([1, studentGroupVar]);
+      lessThanConstraint.push([1, studentGroupVar]);
+    }
+    greaterThanConstraint.push(...[">=", minTeamSize])
+    lessThanConstraint.push(...["<=", maxTeamSize])
+    model.addConstr(greaterThanConstraint);
+    model.addConstr(lessThanConstraint);
+  }
+}
+
+const addStudentCountConstraintsToModel = (numTeams: number, students: Student[], model: LPModel.Model, variables: {[key: string]: LPModel.Variable}) => {
+  for (const student of students) {
+    const constraint = [];
+    for (let i = 0; i < numTeams; i++) {
+      const studentGroupVar = getVariableForAstNode({ type: "STUDENT", id: student.id }, i, model, variables);
+      constraint.push([1, studentGroupVar]);
+    }
+    constraint.push(...["=", 1])
+    model.addConstr(constraint);
+  }
 }
 
 const setModelObjective = (relations: Relation[], model: LPModel.Model, variables: {[key: string]: LPModel.Variable}, students: Student[]) => {
@@ -356,11 +387,18 @@ export const generateTeams = (relations: Relation[], numTeams: number, students:
   const model = new LPModel.Model();
   const variables: {[key: string]: LPModel.Variable} = {};
 
-  addConstraintsToModel(ast, model, variables);
+
+  addTeamSizeConstraintsToModel(numTeams, students, model, variables);
+  addStudentCountConstraintsToModel(numTeams, students, model, variables);
+  for (let i = 0; i < numTeams; i++) {
+    addAstConstraintsToModel(ast, model, variables, i);
+  }
+
   setModelObjective(relations, model, variables, students);
 
+  const result = model.solve("highs");
 
-
+  console.log(result);
 
   return [];
 }

@@ -7,6 +7,7 @@ import RelationList from './components/RelationList.tsx'
 import GenerateTeams from './components/GenerateTeams.tsx'
 import { Student, Tag, RelationEntry, Relation } from './types'
 import {v4 as uuidv4} from 'uuid';
+import { generateTeams } from './utils/textParser.ts'
 
 function App() {
   const [students, setStudents] = useState<Student[]>(() =>
@@ -26,15 +27,15 @@ function App() {
   // Save to localStorage whenever students or tags change
   useEffect(() => {
     localStorage.setItem('students', JSON.stringify(students))
-  }, [students])
+  }, [JSON.stringify(students)])
 
   useEffect(() => {
     localStorage.setItem('tags', JSON.stringify(tags))
-  }, [tags])
+  }, [JSON.stringify(tags)])
 
   useEffect(() => {
     localStorage.setItem('relations', JSON.stringify(relations))
-  }, [relations])
+  }, [JSON.stringify(relations)])
 
   // Clean up unused tags whenever students change
   useEffect(() => {
@@ -128,8 +129,7 @@ function App() {
   }
 
   const handleGenerateTeams = () => {
-    // TODO: Implement team generation logic
-    console.log('Generate teams:', numTeams)
+    generateTeams(relations, parseInt(numTeams), students)
   }
 
   return (
