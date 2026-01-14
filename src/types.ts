@@ -16,14 +16,9 @@ export interface Suggestion {
   studentName?: string
 }
 
-export type RelationEntry =
-  | { type: 'TEXT'; value: string }
-  | { type: 'STUDENT'; id: string }
-  | { type: 'TAG'; id: string }
-
 export interface Relation {
   id: string
-  entries: RelationEntry[]
+  value: string,
   priority: number
 }
 

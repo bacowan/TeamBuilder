@@ -1,10 +1,11 @@
-import { RelationEntry, Student, Tag } from '../types'
-import MentionInput from './MentionInput'
-import { validateRelationEntries } from '../utils/textParser'
+import { Student, Tag } from '../types'
+import { MentionsInput, Mention } from 'react-mentions'
+import { validateRelation } from '../utils/textParser'
+import RelationInput from './RelationInput'
 
 interface AddRelationProps {
-  relationInput: RelationEntry[]
-  onRelationInputChange: (relation: RelationEntry[]) => void
+  relationInput: string
+  onRelationInputChange: (relation: string) => void
   priority: number
   onPriorityChange: (priority: number) => void
   students: Student[]
@@ -18,7 +19,7 @@ function AddRelation({ relationInput, onRelationInputChange, priority, onPriorit
     onAddRelation()
   }
 
-  const isValid = validateRelationEntries(relationInput)
+  const isValid = validateRelation(relationInput)
   const hasContent = relationInput.length > 0
 
   return (
@@ -41,7 +42,7 @@ function AddRelation({ relationInput, onRelationInputChange, priority, onPriorit
         </div>
         <div className="flex-1 flex flex-col gap-1">
           <label className="text-xs text-gray-600">Relation</label>
-          <MentionInput
+          <RelationInput
             value={relationInput}
             onChange={onRelationInputChange}
             students={students}

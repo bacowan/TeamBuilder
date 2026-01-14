@@ -1,74 +1,6 @@
-import { RelationEntry, Student, Tag, Relation, TokenizedRelationEntry, ASTNode, TokenType, Team } from '../types'
+import { Student, Tag, Relation, TokenizedRelationEntry, ASTNode, TokenType, Team } from '../types'
 import * as LPModel from 'lp-model'
 import {v4 as uuidv4} from 'uuid';
-
-// Convert text entries to string
-export const textEntriesToString = (
-  entries: RelationEntry[],
-  students: Student[],
-  tags: Tag[]
-): string => {
-  return entries.map(entry => {
-    if (entry.type === 'STUDENT') {
-      const student = students.find(s => s.id === entry.id)
-      return student ? `@${student.name}` : ''
-    }
-    if (entry.type === 'TAG') {
-      const tag = tags.find(t => t.id === entry.id)
-      return tag ? `@${tag.name}` : ''
-    }
-    return entry.value
-  }).join('')
-}
-
-// Parse string into text entries
-export const parseTextEntries = (
-  text: string,
-  students: Student[],
-  tags: Tag[]
-): RelationEntry[] => {
-  const entries: RelationEntry[] = []
-  // Match @ followed by non-space characters until we hit space, special char, or end
-  const mentionRegex = /@(\S+?)(?=\s|$|[()[\]{}|&!]|@)/g
-  let lastIndex = 0
-
-  let match
-  while ((match = mentionRegex.exec(text)) !== null) {
-    // Add text before mention
-    if (match.index > lastIndex) {
-      const textBefore = text.slice(lastIndex, match.index)
-      if (textBefore) {
-        entries.push({ type: 'TEXT', value: textBefore })
-      }
-    }
-
-    // Try to match student or tag by name
-    const mentionName = match[1]
-    const student = students.find(s => s.name === mentionName)
-    const tag = tags.find(t => t.name === mentionName)
-
-    if (student) {
-      entries.push({ type: 'STUDENT', id: student.id })
-    } else if (tag) {
-      entries.push({ type: 'TAG', id: tag.id })
-    } else {
-      // Unknown mention, treat as text
-      entries.push({ type: 'TEXT', value: `@${mentionName}` })
-    }
-
-    lastIndex = match.index + match[0].length
-  }
-
-  // Add remaining text
-  if (lastIndex < text.length) {
-    const remaining = text.slice(lastIndex)
-    if (remaining) {
-      entries.push({ type: 'TEXT', value: remaining })
-    }
-  }
-
-  return entries.length > 0 ? entries : [{ type: 'TEXT', value: text }]
-}
 
 // Find @ mention context at cursor position
 export const findMentionContext = (text: string, position: number) => {
@@ -87,7 +19,10 @@ export const findMentionContext = (text: string, position: number) => {
   }
 }
 
-const tokenizeRelationEntry = (text: string): TokenizedRelationEntry[] | null => {
+// Parse relation into validated relation with tokens (AND, OR, NOT, parens)
+// Returns null if the relation is invalid
+export const tokenizeRelation = (text: string): TokenizedRelationEntry[] | null => {
+
   const res: TokenizedRelationEntry[] = [];
   let currentText = "";
 
@@ -133,32 +68,9 @@ const tokenizeRelationEntry = (text: string): TokenizedRelationEntry[] | null =>
   return res;
 }
 
-// Parse relation into validated relation with tokens (AND, OR, NOT, parens)
-// Returns null if the relation is invalid
-export const tokenizeRelation = (entries: RelationEntry[]): TokenizedRelationEntry[] | null => {
-  const res: TokenizedRelationEntry[] = [];
-
-  for (const entry of entries) {
-    if (entry.type === "TEXT") {
-      const tokenizedEntries = tokenizeRelationEntry(entry.value);
-      if (tokenizedEntries === null) {
-        return null;
-      }
-      else {
-        res.push(...tokenizedEntries);
-      }
-    }
-    else {
-      res.push(entry);
-    }
-  }
-  
-  return res;
-}
-
 // Validate relation entries using parseRelation
-export const validateRelationEntries = (entries: RelationEntry[]): boolean => {
-  const parsed = tokenizeRelation(entries);
+export const validateRelation = (value: string): boolean => {
+  const parsed = tokenizeRelation(value);
   if (parsed === null) {
     return false;
   }
@@ -271,7 +183,7 @@ const createAbstractSyntaxTreeForTokens = (tokens: TokenizedRelationEntry[], stu
 }
 
 const createAbstractSyntaxTreeForRelation = (relation: Relation, students: Student[]): ASTNode => {
-  const tokenized = tokenizeRelation(relation.entries);
+  const tokenized = tokenizeRelation(relation.value);
   if (tokenized === null) {
     throw new Error("Invalid relation entries");
   }

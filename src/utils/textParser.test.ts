@@ -4,7 +4,7 @@ import {
   parseTextEntries,
   findMentionContext,
   tokenizeRelation,
-  validateRelationEntries,
+  validateRelation,
   createAbstractSyntaxTree
 } from './textParser'
 import { Student, Tag, RelationEntry, Relation } from '../types'
@@ -312,7 +312,7 @@ describe('validateRelationEntries', () => {
     const entries: RelationEntry[] = [
       { type: 'STUDENT', id: 1 }
     ]
-    expect(validateRelationEntries(entries)).toBe(true)
+    expect(validateRelation(entries)).toBe(true)
   })
 
   it('should validate AND expression', () => {
@@ -321,7 +321,7 @@ describe('validateRelationEntries', () => {
       { type: 'TEXT', value: ' AND ' },
       { type: 'STUDENT', id: 2 }
     ]
-    expect(validateRelationEntries(entries)).toBe(true)
+    expect(validateRelation(entries)).toBe(true)
   })
 
   it('should validate OR expression', () => {
@@ -330,7 +330,7 @@ describe('validateRelationEntries', () => {
       { type: 'TEXT', value: ' OR ' },
       { type: 'TAG', id: 2 }
     ]
-    expect(validateRelationEntries(entries)).toBe(true)
+    expect(validateRelation(entries)).toBe(true)
   })
 
   it('should validate NOT expression', () => {
@@ -338,7 +338,7 @@ describe('validateRelationEntries', () => {
       { type: 'TEXT', value: 'NOT ' },
       { type: 'STUDENT', id: 1 }
     ]
-    expect(validateRelationEntries(entries)).toBe(true)
+    expect(validateRelation(entries)).toBe(true)
   })
 
   it('should validate complex expression with parentheses', () => {
@@ -349,14 +349,14 @@ describe('validateRelationEntries', () => {
       { type: 'STUDENT', id: 2 },
       { type: 'TEXT', value: ')' }
     ]
-    expect(validateRelationEntries(entries)).toBe(true)
+    expect(validateRelation(entries)).toBe(true)
   })
 
   it('should invalidate invalid text', () => {
     const entries: RelationEntry[] = [
       { type: 'TEXT', value: 'invalid' }
     ]
-    expect(validateRelationEntries(entries)).toBe(false)
+    expect(validateRelation(entries)).toBe(false)
   })
 
   it('should invalidate AND at start', () => {
@@ -364,7 +364,7 @@ describe('validateRelationEntries', () => {
       { type: 'TEXT', value: 'AND ' },
       { type: 'STUDENT', id: 1 }
     ]
-    expect(validateRelationEntries(entries)).toBe(false)
+    expect(validateRelation(entries)).toBe(false)
   })
 
   it('should invalidate OR at start', () => {
@@ -372,7 +372,7 @@ describe('validateRelationEntries', () => {
       { type: 'TEXT', value: 'OR ' },
       { type: 'STUDENT', id: 1 }
     ]
-    expect(validateRelationEntries(entries)).toBe(false)
+    expect(validateRelation(entries)).toBe(false)
   })
 
   it('should invalidate AND at end', () => {
@@ -380,7 +380,7 @@ describe('validateRelationEntries', () => {
       { type: 'STUDENT', id: 1 },
       { type: 'TEXT', value: ' AND' }
     ]
-    expect(validateRelationEntries(entries)).toBe(false)
+    expect(validateRelation(entries)).toBe(false)
   })
 
   it('should invalidate consecutive ANDs', () => {
@@ -389,7 +389,7 @@ describe('validateRelationEntries', () => {
       { type: 'TEXT', value: ' AND AND ' },
       { type: 'STUDENT', id: 2 }
     ]
-    expect(validateRelationEntries(entries)).toBe(false)
+    expect(validateRelation(entries)).toBe(false)
   })
 
   it('should invalidate NOT after student', () => {
@@ -397,7 +397,7 @@ describe('validateRelationEntries', () => {
       { type: 'STUDENT', id: 1 },
       { type: 'TEXT', value: ' NOT' }
     ]
-    expect(validateRelationEntries(entries)).toBe(false)
+    expect(validateRelation(entries)).toBe(false)
   })
 
   it('should invalidate unmatched opening parenthesis', () => {
@@ -405,7 +405,7 @@ describe('validateRelationEntries', () => {
       { type: 'TEXT', value: '(' },
       { type: 'STUDENT', id: 1 }
     ]
-    expect(validateRelationEntries(entries)).toBe(false)
+    expect(validateRelation(entries)).toBe(false)
   })
 
   it('should invalidate unmatched closing parenthesis', () => {
@@ -413,7 +413,7 @@ describe('validateRelationEntries', () => {
       { type: 'STUDENT', id: 1 },
       { type: 'TEXT', value: ')' }
     ]
-    expect(validateRelationEntries(entries)).toBe(false)
+    expect(validateRelation(entries)).toBe(false)
   })
 
   it('should validate nested parentheses', () => {
@@ -422,7 +422,7 @@ describe('validateRelationEntries', () => {
       { type: 'STUDENT', id: 1 },
       { type: 'TEXT', value: '))' }
     ]
-    expect(validateRelationEntries(entries)).toBe(true)
+    expect(validateRelation(entries)).toBe(true)
   })
 
   it('should validate complex nested expression', () => {
@@ -437,7 +437,7 @@ describe('validateRelationEntries', () => {
       { type: 'TAG', id: 2 },
       { type: 'TEXT', value: ')' }
     ]
-    expect(validateRelationEntries(entries)).toBe(true)
+    expect(validateRelation(entries)).toBe(true)
   })
 
   it('should invalidate AND after opening parenthesis', () => {
@@ -446,7 +446,7 @@ describe('validateRelationEntries', () => {
       { type: 'STUDENT', id: 1 },
       { type: 'TEXT', value: ')' }
     ]
-    expect(validateRelationEntries(entries)).toBe(false)
+    expect(validateRelation(entries)).toBe(false)
   })
 
   it('should validate NOT after opening parenthesis', () => {
@@ -455,7 +455,7 @@ describe('validateRelationEntries', () => {
       { type: 'STUDENT', id: 1 },
       { type: 'TEXT', value: ')' }
     ]
-    expect(validateRelationEntries(entries)).toBe(true)
+    expect(validateRelation(entries)).toBe(true)
   })
 
   it('should invalidate NOT at end', () => {
@@ -463,7 +463,7 @@ describe('validateRelationEntries', () => {
       { type: 'STUDENT', id: 1 },
       { type: 'TEXT', value: ' AND NOT' }
     ]
-    expect(validateRelationEntries(entries)).toBe(false)
+    expect(validateRelation(entries)).toBe(false)
   })
 })
 

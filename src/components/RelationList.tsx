@@ -1,11 +1,11 @@
-import { Relation, Student, Tag, RelationEntry } from '../types'
+import { Relation, Student, Tag } from '../types'
 import RelationItem from './RelationItem'
 
 interface RelationListProps {
   relations: Relation[]
   students: Student[]
   tags: Tag[]
-  onUpdateRelation: (id: string, entries: RelationEntry[], priority: number) => void
+  onUpdateRelation: (id: string, value: string, priority: number) => void
   onDeleteRelation: (id: string) => void
 }
 

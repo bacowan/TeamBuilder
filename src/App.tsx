@@ -5,7 +5,7 @@ import StudentList from './components/StudentList.tsx'
 import AddRelation from './components/AddRelation.tsx'
 import RelationList from './components/RelationList.tsx'
 import GenerateTeams from './components/GenerateTeams.tsx'
-import { Student, Tag, RelationEntry, Relation } from './types'
+import { Student, Tag, Relation } from './types'
 import {v4 as uuidv4} from 'uuid';
 import { generateTeams } from './utils/textParser.ts'
 
@@ -20,7 +20,7 @@ function App() {
     JSON.parse(localStorage.getItem('relations') || '[]') as Relation[]
   )
   const [studentName, setStudentName] = useState('')
-  const [relationInput, setRelationInput] = useState<RelationEntry[]>([])
+  const [relationInput, setRelationInput] = useState<string>('')
   const [relationPriority, setRelationPriority] = useState(1)
   const [numTeams, setNumTeams] = useState('')
 
@@ -101,7 +101,7 @@ function App() {
       setTags([])
       setRelations([])
       setStudentName('')
-      setRelationInput([])
+      setRelationInput('')
       setRelationPriority(1)
       setNumTeams('')
     }
@@ -111,16 +111,16 @@ function App() {
     if (relationInput.length > 0 && relationPriority > 0) {
       setRelations(prev => {
         const id = uuidv4()
-        return [...prev, { id, entries: relationInput, priority: relationPriority }]
+        return [...prev, { id, value: relationInput, priority: relationPriority }]
       })
-      setRelationInput([])
+      setRelationInput('')
       setRelationPriority(1)
     }
   }
 
-  const updateRelation = (id: string, entries: RelationEntry[], priority: number) => {
+  const updateRelation = (id: string, value: string, priority: number) => {
     setRelations(prev => prev.map(r =>
-      r.id === id ? { ...r, entries, priority } : r
+      r.id === id ? { ...r, value, priority } : r
     ))
   }
 
