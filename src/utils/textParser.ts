@@ -33,11 +33,12 @@ export const tokenizeRelation = (text: string): TokenizedRelationEntry[] | null 
 
   for (let i = 0; i < text.length; i++) {
     const currentCharacter = text[i];
+    const currentTextUpper = currentText.toUpperCase();
     if (/\s/.test(currentCharacter)) {
       // ignore if nothing came before this space
       if (currentText.length > 0) {
-        if (currentText === "AND" || currentText === "OR" || currentText === "NOT") {
-          res.push({ type: currentText });
+        if (currentTextUpper === "AND" || currentTextUpper === "OR" || currentTextUpper === "NOT") {
+          res.push({ type: currentTextUpper });
         }
         else if (studentMentionRegex.test(currentText)) {
           res.push({ type: "STUDENT", id: currentText.slice(currentText.lastIndexOf("(") + 1, currentText.lastIndexOf(")")) });
@@ -52,8 +53,8 @@ export const tokenizeRelation = (text: string): TokenizedRelationEntry[] | null 
       }
     }
     else if ((currentCharacter === "(" || currentCharacter === ")") && currentText.length === 0) {
-      if (currentText === "AND" || currentText === "OR" || currentText === "NOT") {
-        res.push({ type: currentText });
+      if (currentTextUpper === "AND" || currentTextUpper === "OR" || currentTextUpper === "NOT") {
+        res.push({ type: currentTextUpper });
         res.push({ type: currentCharacter });
         currentText = "";
       }
@@ -62,7 +63,7 @@ export const tokenizeRelation = (text: string): TokenizedRelationEntry[] | null 
       }
     }
     else {
-      currentText += currentCharacter.toUpperCase();
+      currentText += currentCharacter;
     }
   }
 
