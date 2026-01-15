@@ -1,5 +1,5 @@
 import { Student, Tag } from "../types"
-import { MentionsInput, Mention, SuggestionDataItem } from 'react-mentions'
+import { MentionsInput, Mention } from 'react-mentions-ts'
 import RelationSuggestion from "./RelationSuggestion"
 
 interface RelationInputProps {
