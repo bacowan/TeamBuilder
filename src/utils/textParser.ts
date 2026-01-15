@@ -26,6 +26,11 @@ export const tokenizeRelation = (text: string): TokenizedRelationEntry[] | null 
   const res: TokenizedRelationEntry[] = [];
   let currentText = "";
 
+  text += " "; // add a space to force the last character to be processed
+
+  const studentMentionRegex = /^@\[.+?\]\([a-zA-Z0-9-]+\)$/;
+  const tagMentionRegex = /^#\[.+?\]\([a-zA-Z0-9-]+\)$/;
+
   for (let i = 0; i < text.length; i++) {
     const currentCharacter = text[i];
     if (/\s/.test(currentCharacter)) {
@@ -33,14 +38,20 @@ export const tokenizeRelation = (text: string): TokenizedRelationEntry[] | null 
       if (currentText.length > 0) {
         if (currentText === "AND" || currentText === "OR" || currentText === "NOT") {
           res.push({ type: currentText });
-          currentText = "";
+        }
+        else if (studentMentionRegex.test(currentText)) {
+          res.push({ type: "STUDENT", id: currentText.slice(currentText.lastIndexOf("(") + 1, currentText.lastIndexOf(")")) });
+        }
+        else if (tagMentionRegex.test(currentText)) {
+          res.push({ type: "TAG", id: currentText.slice(currentText.lastIndexOf("(") + 1, currentText.lastIndexOf(")")) });
         }
         else {
           return null;
         }
+        currentText = "";
       }
     }
-    else if (currentCharacter === "(" || currentCharacter === ")") {
+    else if ((currentCharacter === "(" || currentCharacter === ")") && currentText.length === 0) {
       if (currentText === "AND" || currentText === "OR" || currentText === "NOT") {
         res.push({ type: currentText });
         res.push({ type: currentCharacter });

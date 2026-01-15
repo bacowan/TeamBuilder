@@ -21,6 +21,7 @@ function RelationInput({ value, onChange, students, tags, placeholder }: Relatio
             placeholder={placeholder}>
             <Mention
                 trigger="@"
+                appendSpaceOnAdd={true}
                 data={students.map(student => ({ id: student.id, display: student.name }))}
                 renderSuggestion={(suggestion, search, highlightedDisplay, index, focused) =>
                     <RelationSuggestion suggestion={suggestion.display ?? ""} focused={focused} key={suggestion.id} />
@@ -29,6 +30,7 @@ function RelationInput({ value, onChange, students, tags, placeholder }: Relatio
             />
             <Mention
                 trigger="#"
+                appendSpaceOnAdd={true}
                 data={tags.map(tag => ({ id: tag.id, display: tag.name }))}
                 renderSuggestion={(suggestion, search, highlightedDisplay, index, focused) =>
                     <RelationSuggestion suggestion={suggestion.display ?? ""} focused={focused} key={suggestion.id} />
