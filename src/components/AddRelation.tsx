@@ -25,7 +25,7 @@ function AddRelation({ relationInput, onRelationInputChange, priority, onPriorit
   return (
     <>
       <p className="text-sm text-gray-600 mb-3">
-        Type @ to mention students or tags. Use AND, OR, NOT to create relations.
+        Type @ to mention students and # to mention tags. Use AND, OR, NOT to create relations.
       </p>
       <form onSubmit={handleSubmit} className="relative flex gap-2">
         <div className="flex flex-col gap-1">
