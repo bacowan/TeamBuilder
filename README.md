@@ -31,6 +31,7 @@ Open http://localhost:5173/TeamBuilder/ in your browser.
 ### Deploy
 
 ```bash
+npm run build
 npm run deploy
 ```
 

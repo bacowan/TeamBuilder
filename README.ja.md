@@ -31,6 +31,7 @@ npm run dev
 ### デプロイ
 
 ```bash
+npm run build
 npm run deploy
 ```
 
