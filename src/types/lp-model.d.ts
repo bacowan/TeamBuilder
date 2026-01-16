@@ -14,15 +14,19 @@ declare module 'lp-model' {
     eq?: number
   }
 
+  type Expression = ([number, Variable] | Variable | number)[];
+
+
   export class Model {
     constructor()
-    addVar(options?: { name?: string; lb?: number; ub?: number; type?: 'continuous' | 'integer' | 'binary'; obj?: number }): Variable
-    addVars(names: string[], options?: { lb?: number; ub?: number; type?: 'continuous' | 'integer' | 'binary'; obj?: number }): { [key: string]: Variable }
-    addConstr(expr: any, options?: { name?: string; lb?: number; ub?: number; eq?: number }): Constraint
-    setObjective(expr: any, sense?: 'minimize' | 'maximize'): void
-    solve(solver: any): void
+    addVar(options?: { name?: string; lb?: number; ub?: number; vtype?: 'CONTINUOUS' | 'INTEGER' | 'BINARY'; obj?: number }): Variable
+    addVars(names: string[], options?: { lb?: number; ub?: number; vtype?: 'CONTINUOUS' | 'INTEGER' | 'BINARY'; obj?: number }): { [key: string]: Variable }
+    addConstr(expression: Expression, operator: "<=" | "<" | "=" | ">" | ">=", rhs: number | Expression): Constraint
+    setObjective(expr: any, sense?: 'MAXIMIZE' | 'MINIMIZE'): void
+    solve(solver: any): Promise
     toLP(): string
     loadLP(lpString: string): void
+    toLPFormat(): string
   }
 
   export const GREATER_THAN: number

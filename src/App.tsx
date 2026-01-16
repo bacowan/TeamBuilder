@@ -6,8 +6,8 @@ import AddRelation from './components/AddRelation.tsx'
 import RelationList from './components/RelationList.tsx'
 import GenerateTeams from './components/GenerateTeams.tsx'
 import { Student, Tag, Relation } from './types'
-import {v4 as uuidv4} from 'uuid';
 import { generateTeams } from './utils/textParser.ts'
+import generateId from './utils/idGenerator.ts'
 
 function App() {
   const [students, setStudents] = useState<Student[]>(() =>
@@ -47,7 +47,7 @@ function App() {
     const name = studentName.trim()
     if (name) {
       setStudents(prev => {
-        const id = uuidv4()
+        const id = generateId()
         return [...prev, { id, name, tags: [] }]
       })
       setStudentName('')
@@ -71,7 +71,7 @@ function App() {
     // Find or create tag
     let tag = tags.find(t => t.name === trimmedName)
     if (!tag) {
-      const newTagId = uuidv4()
+      const newTagId = generateId()
       tag = { id: newTagId, name: trimmedName }
       setTags(prev => [...prev, tag!])
     }
@@ -110,7 +110,7 @@ function App() {
   const handleAddRelation = () => {
     if (relationInput.length > 0 && relationPriority > 0) {
       setRelations(prev => {
-        const id = uuidv4()
+        const id = generateId()
         return [...prev, { id, value: relationInput, priority: relationPriority }]
       })
       setRelationInput('')
@@ -128,8 +128,8 @@ function App() {
     setRelations(prev => prev.filter(r => r.id !== id))
   }
 
-  const handleGenerateTeams = () => {
-    generateTeams(relations, parseInt(numTeams), students)
+  const handleGenerateTeams = async () => {
+    await generateTeams(relations, parseInt(numTeams), students)
   }
 
   return (

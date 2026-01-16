@@ -1,6 +1,13 @@
 import { Student, Tag, Relation, TokenizedRelationEntry, ASTNode, TokenType, Team } from '../types'
 import * as LPModel from 'lp-model'
-import {v4 as uuidv4} from 'uuid';
+// Import highs to load the WebAssembly module (sets up global Module function)
+import 'highs';
+import generateId from './idGenerator';
+
+// Declare the global Module function that highs.js provides
+declare global {
+  function Module(): Promise<any>;
+}
 
 // Find @ mention context at cursor position
 export const findMentionContext = (text: string, position: number) => {
@@ -134,7 +141,7 @@ const createAbstractSyntaxTreeForTokens = (tokens: TokenizedRelationEntry[], stu
     else if (parenthesisCount === 0) {
       if (tokenType === "AND" || tokenType === "OR") {
         return {
-          id: uuidv4(),
+          id: generateId(),
           type: tokenType,
           left: createAbstractSyntaxTreeForTokens(tokens.slice(0, i), students),
           right: createAbstractSyntaxTreeForTokens(tokens.slice(i + 1), students)
@@ -147,7 +154,7 @@ const createAbstractSyntaxTreeForTokens = (tokens: TokenizedRelationEntry[], stu
   // if there are no top level ands or ors, check if this is a not
   if (firstToken.type === "NOT") {
     return {
-      id: uuidv4(),
+      id: generateId(),
       type: "NOT",
       child: createAbstractSyntaxTreeForTokens(tokens.slice(1), students)
     }
@@ -172,12 +179,12 @@ const createAbstractSyntaxTreeForTokens = (tokens: TokenizedRelationEntry[], stu
     if (studentsWithTag.length === 0) {
       return {
         type: "TRUE",
-        id: uuidv4()
+        id: generateId()
       };
     }
     else {
       return studentsWithTag.slice(1).reduce<ASTNode>((acc, curr) => ({
-        id: uuidv4(),
+        id: generateId(),
         type: "OR",
         left: acc,
         right: {
@@ -209,7 +216,7 @@ export const createAbstractSyntaxTree = (relations: Relation[], students: Studen
   }
   else {
     return relations.slice(1).reduce((acc, curr) => ({
-      id: uuidv4(),
+      id: generateId(),
       type: 'AND',
       left: acc,
       right: createAbstractSyntaxTreeForRelation(curr, students)
@@ -218,12 +225,13 @@ export const createAbstractSyntaxTree = (relations: Relation[], students: Studen
 }
 
 const getVariableForAstNode = (node: ASTNode, group: number, model: LPModel.Model, variables: {[key: string]: LPModel.Variable}): LPModel.Variable => {
-  if (variables[node.id]) {
-    return variables[node.id];
+  const key = `${node.id}_group_${group}`;
+  if (variables[key]) {
+    return variables[key];
   }
 
-  const variable = model.addVar({ name: `${node.id}_group_${group}`, type: "binary" });
-  variables[node.id] = variable;
+  const variable = model.addVar({ name: key, vtype: "BINARY" });
+  variables[key] = variable;
   return variable;
 }
 
@@ -236,9 +244,9 @@ const addAstConstraintsToModel = (node: ASTNode, model: LPModel.Model, variables
     // parent ≤ leftChild
     // parent ≤ rightChild
     // parent ≥ leftChild + rightChild - 1
-    model.addConstr([[1, nodeVar], [-1, leftVar], "<=", 0])
-    model.addConstr([[1, nodeVar], [-1, rightVar], "<=", 0])
-    model.addConstr([[1, nodeVar, [-1, leftVar], [-1, rightVar]], "GE", -1])
+    model.addConstr([[1, nodeVar], [-1, leftVar]], "<=", 0)
+    model.addConstr([[1, nodeVar], [-1, rightVar]], "<=", 0)
+    model.addConstr([[1, nodeVar], [-1, leftVar], [-1, rightVar]], ">=", -1)
     addAstConstraintsToModel(node.left, model, variables, group)
     addAstConstraintsToModel(node.right, model, variables, group)
   }
@@ -250,9 +258,9 @@ const addAstConstraintsToModel = (node: ASTNode, model: LPModel.Model, variables
     // parent ≥ leftChild
     // parent ≥ rightChild
     // parent ≤ leftChild + rightChild
-    model.addConstr([[1, nodeVar], [-1, leftVar], ">=", 0])
-    model.addConstr([[1, nodeVar], [-1, rightVar], ">=", 0])
-    model.addConstr([[1, nodeVar, [-1, leftVar], [-1, rightVar]], "LE", 0])
+    model.addConstr([nodeVar, [-1, leftVar]], ">=", 0)
+    model.addConstr([nodeVar, [-1, rightVar]], ">=", 0)
+    model.addConstr([nodeVar, [-1, leftVar], [-1, rightVar]], "<=", 0)
     addAstConstraintsToModel(node.left, model, variables, group)
     addAstConstraintsToModel(node.right, model, variables, group)
   }
@@ -261,7 +269,7 @@ const addAstConstraintsToModel = (node: ASTNode, model: LPModel.Model, variables
     const childVar = getVariableForAstNode(node.child, group, model, variables);
     // Constraints for NOT:
     // parent + child = 1
-    model.addConstr([[1, nodeVar], [1, childVar], "=", 1])
+    model.addConstr([nodeVar, childVar], "=", 1)
     addAstConstraintsToModel(node.child, model, variables, group)
   }
   
@@ -272,42 +280,45 @@ const addTeamSizeConstraintsToModel = (numTeams: number, students: Student[], mo
   const maxTeamSize = Math.ceil(students.length / numTeams);
 
   for (let i = 0; i < numTeams; i++) {
-    const greaterThanConstraint = [];
-    const lessThanConstraint = [];
+    const greaterThanExpression = [];
+    const lessThanExpression = [];
     for (const student of students) {
       const studentGroupVar = getVariableForAstNode({ type: "STUDENT", id: student.id }, i, model, variables);
-      greaterThanConstraint.push([1, studentGroupVar]);
-      lessThanConstraint.push([1, studentGroupVar]);
+      greaterThanExpression.push(studentGroupVar);
+      lessThanExpression.push(studentGroupVar);
     }
-    greaterThanConstraint.push(...[">=", minTeamSize])
-    lessThanConstraint.push(...["<=", maxTeamSize])
-    model.addConstr(greaterThanConstraint);
-    model.addConstr(lessThanConstraint);
+    
+    model.addConstr(greaterThanExpression, ">=", minTeamSize);
+    model.addConstr(lessThanExpression, "<=", maxTeamSize);
   }
 }
 
 const addStudentCountConstraintsToModel = (numTeams: number, students: Student[], model: LPModel.Model, variables: {[key: string]: LPModel.Variable}) => {
   for (const student of students) {
-    const constraint = [];
+    const expression: LPModel.Expression = [];
     for (let i = 0; i < numTeams; i++) {
       const studentGroupVar = getVariableForAstNode({ type: "STUDENT", id: student.id }, i, model, variables);
-      constraint.push([1, studentGroupVar]);
+      expression.push(studentGroupVar);
     }
-    constraint.push(...["=", 1])
-    model.addConstr(constraint);
+    model.addConstr(expression, "=", 1);
   }
 }
 
-const setModelObjective = (relations: Relation[], model: LPModel.Model, variables: {[key: string]: LPModel.Variable}, students: Student[]) => {
+const setModelObjective = (asts: {relation: Relation; ast: ASTNode;}[], model: LPModel.Model, variables: {[key: string]: LPModel.Variable}, numTeams: number) => {
   const objectiveParams = [];
-  for (const relation of relations) {
-    objectiveParams.push([relation.priority, variables[relation.id]]);
+  for (const ast of asts) {
+    for (let i = 0; i < numTeams; i++) {
+      objectiveParams.push([ast.relation.priority, getVariableForAstNode(ast.ast, i, model, variables)]);
+    }
   }
-  model.setObjective(objectiveParams, "maximize");
+  model.setObjective(objectiveParams, "MAXIMIZE");
 }
 
-export const generateTeams = (relations: Relation[], numTeams: number, students: Student[]): Team[] => {
-  const ast = createAbstractSyntaxTree(relations, students);
+export const generateTeams = async (relations: Relation[], numTeams: number, students: Student[]): Promise<Team[]> => {
+  const asts = relations.map(r => ({
+    relation: r,
+    ast: createAbstractSyntaxTreeForRelation(r, students)
+  }));
   const model = new LPModel.Model();
   const variables: {[key: string]: LPModel.Variable} = {};
 
@@ -315,14 +326,28 @@ export const generateTeams = (relations: Relation[], numTeams: number, students:
   addTeamSizeConstraintsToModel(numTeams, students, model, variables);
   addStudentCountConstraintsToModel(numTeams, students, model, variables);
   for (let i = 0; i < numTeams; i++) {
-    addAstConstraintsToModel(ast, model, variables, i);
+    for (const ast of asts) {
+      addAstConstraintsToModel(ast.ast, model, variables, i);
+    }
   }
 
-  setModelObjective(relations, model, variables, students);
+  setModelObjective(asts, model, variables, numTeams);
 
-  const result = model.solve("highs");
+  const highs = await Module();
+  await model.solve(highs);
 
-  console.log(result);
+  console.log('Solver result:');
+  for (let i = 0; i < numTeams; i++) {
+    console.log(`Team ${i}:`);
+    for (const student of students) {
+      const key = `${student.id}_group_${i}`;
+      const variable = variables[key];
+      if (variable.value === 1) {
+        console.log(` - ${student.name}`);
+      }
+    }
+  }
+
 
   return [];
 }
