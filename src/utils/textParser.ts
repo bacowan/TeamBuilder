@@ -336,18 +336,20 @@ export const generateTeams = async (relations: Relation[], numTeams: number, stu
   const highs = await Module();
   await model.solve(highs);
 
-  console.log('Solver result:');
+  const teams: Team[] = [];
+
   for (let i = 0; i < numTeams; i++) {
-    console.log(`Team ${i}:`);
+    const teamStudents: string[] = [];
     for (const student of students) {
       const key = `${student.id}_group_${i}`;
       const variable = variables[key];
       if (variable.value === 1) {
-        console.log(` - ${student.name}`);
+        teamStudents.push(student.name);
       }
     }
+    teams.push({ students: teamStudents });
   }
 
 
-  return [];
+  return teams;
 }

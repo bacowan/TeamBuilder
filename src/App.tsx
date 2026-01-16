@@ -5,7 +5,7 @@ import StudentList from './components/StudentList.tsx'
 import AddRelation from './components/AddRelation.tsx'
 import RelationList from './components/RelationList.tsx'
 import GenerateTeams from './components/GenerateTeams.tsx'
-import { Student, Tag, Relation } from './types'
+import { Student, Tag, Relation, Team } from './types'
 import { generateTeams } from './utils/textParser.ts'
 import generateId from './utils/idGenerator.ts'
 
@@ -23,6 +23,7 @@ function App() {
   const [relationInput, setRelationInput] = useState<string>('')
   const [relationPriority, setRelationPriority] = useState(1)
   const [numTeams, setNumTeams] = useState('')
+  const [generatedTeams, setGeneratedTeams] = useState<Team[]>([])
 
   // Save to localStorage whenever students or tags change
   useEffect(() => {
@@ -129,7 +130,8 @@ function App() {
   }
 
   const handleGenerateTeams = async () => {
-    await generateTeams(relations, parseInt(numTeams), students)
+    const teams = await generateTeams(relations, parseInt(numTeams), students)
+    setGeneratedTeams(teams)
   }
 
   return (
@@ -185,6 +187,7 @@ function App() {
         <section className="mb-6 p-6 bg-white rounded-xl shadow-lg">
           <h2 className="text-2xl font-semibold text-gray-800 mb-4">Generate Teams</h2>
           <GenerateTeams
+            generatedTeams={generatedTeams}
             numTeams={numTeams}
             onNumTeamsChange={setNumTeams}
             onGenerateTeams={handleGenerateTeams}
