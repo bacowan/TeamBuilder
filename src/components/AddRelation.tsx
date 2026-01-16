@@ -47,7 +47,7 @@ function AddRelation({ relationInput, onRelationInputChange, priority, onPriorit
             onChange={onRelationInputChange}
             students={students}
             tags={tags}
-            placeholder="e.g., NOT (@Kakeru AND @Kazuki)"
+            placeholder="e.g., NOT ( @Alice AND @Bob )"
           />
           {hasContent && !isValid && (
             <p className="text-xs text-red-600 mt-1">Invalid relation: only @ mentions of students/tags are allowed</p>
