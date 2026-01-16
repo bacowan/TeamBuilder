@@ -1,5 +1,7 @@
 # Team Builder
 
+[日本語](README.ja.md)
+
 A web app for creating teams based on configurable constraints.
 
 ## How to Use
