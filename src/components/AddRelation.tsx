@@ -1,6 +1,6 @@
 import { Student, Tag } from '../types'
 import { MentionsInput, Mention } from 'react-mentions'
-import { validateRelation } from '../utils/textParser'
+import { validateRelation } from '../utils/teamGenerator'
 import RelationInput from './RelationInput'
 
 interface AddRelationProps {

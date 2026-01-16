@@ -6,7 +6,7 @@ import AddRelation from './components/AddRelation.tsx'
 import RelationList from './components/RelationList.tsx'
 import GenerateTeams from './components/GenerateTeams.tsx'
 import { Student, Tag, Relation, Team } from './types'
-import { generateTeams } from './utils/textParser.ts'
+import { generateTeams } from './utils/teamGenerator.ts'
 import generateId from './utils/idGenerator.ts'
 
 function App() {

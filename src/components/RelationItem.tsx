@@ -1,5 +1,5 @@
 import { Relation, Student, Tag } from '../types'
-import { validateRelation } from '../utils/textParser'
+import { validateRelation } from '../utils/teamGenerator'
 import RelationInput from './RelationInput'
 
 interface RelationItemProps {

@@ -9,26 +9,9 @@ declare global {
   function Module(): Promise<any>;
 }
 
-// Find @ mention context at cursor position
-export const findMentionContext = (text: string, position: number) => {
-  const beforeCursor = text.slice(0, position)
-  const lastAtIndex = beforeCursor.lastIndexOf('@')
-
-  if (lastAtIndex === -1) return null
-
-  const afterAt = beforeCursor.slice(lastAtIndex + 1)
-  // Check if there's a space after @ (which would end the mention)
-  if (afterAt.includes(' ')) return null
-
-  return {
-    atIndex: lastAtIndex,
-    searchTerm: afterAt.toLowerCase()
-  }
-}
-
 // Parse relation into validated relation with tokens (AND, OR, NOT, parens)
 // Returns null if the relation is invalid
-export const tokenizeRelation = (text: string): TokenizedRelationEntry[] | null => {
+const tokenizeRelation = (text: string): TokenizedRelationEntry[] | null => {
 
   const res: TokenizedRelationEntry[] = [];
   let currentText = "";
@@ -208,20 +191,6 @@ const createAbstractSyntaxTreeForRelation = (relation: Relation, students: Stude
   }
 
   return createAbstractSyntaxTreeForTokens(tokenized, students);
-}
-
-export const createAbstractSyntaxTree = (relations: Relation[], students: Student[]): ASTNode => {
-  if (relations.length === 1) {
-    return createAbstractSyntaxTreeForRelation(relations[0], students);
-  }
-  else {
-    return relations.slice(1).reduce((acc, curr) => ({
-      id: generateId(),
-      type: 'AND',
-      left: acc,
-      right: createAbstractSyntaxTreeForRelation(curr, students)
-    }), createAbstractSyntaxTreeForRelation(relations[0], students));
-  }
 }
 
 const getVariableForAstNode = (node: ASTNode, group: number, model: LPModel.Model, variables: {[key: string]: LPModel.Variable}): LPModel.Variable => {
